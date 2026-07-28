@@ -1,0 +1,42 @@
+# Environment and Secret Credential Files
+.env
+.env.*
+vertex_creds.json
+*.pem
+*.key
+
+# Python Virtual Environments
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Test Caches
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+.hypothesis/
+
+# SQLite Database & Storage
+*.db
+*.sqlite
+*.sqlite3
+voice_ai.db
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Generated Files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  voice-ai-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voice_ai_platform
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=VoiceAI Platform
+      - APP_ENV=production
+      - DEBUG=False
+      - PORT=8000
+      - HOST=0.0.0.0
+      - TARGET_MAX_LATENCY_MS=800.0
+      - LLM_PROVIDER=mock
+      - STT_PROVIDER=mock
+      - TTS_PROVIDER=mock
+      - DATABASE_URL=sqlite+aiosqlite:///./voice_ai.db
+      - ENABLE_PROMETHEUS=True
+    volumes:
+      - voice_ai_data:/app/data
+
+volumes:
+  voice_ai_data:

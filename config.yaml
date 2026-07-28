@@ -1,0 +1,48 @@
+app:
+  name: "VoiceAI Platform"
+  env: "production"
+  debug: false
+  port: 8000
+  host: "0.0.0.0"
+  target_max_latency_ms: 800.0
+
+audio:
+  sample_rate: 16000
+  channels: 1
+  bytes_per_sample: 2
+  chunk_size_ms: 20
+  codec: "pcm16"
+
+vad:
+  mode: 3
+  speech_pad_ms: 150
+  silence_timeout_ms: 400
+  energy_threshold: 0.015
+
+llm:
+  provider: "mock"
+  model: "gemini-2.5-flash-live"
+  temperature: 0.4
+  max_tokens: 512
+
+stt:
+  provider: "mock"
+  language_code: "en-US"
+  punctuation: true
+  interim_results: true
+
+tts:
+  provider: "mock"
+  voice_name: "en-US-Neural2-F"
+  speaking_rate: 1.05
+  pitch: 0.0
+
+database:
+  url: "sqlite+aiosqlite:///./voice_ai.db"
+
+telephony:
+  twilio_phone_number: "+18005550199"
+
+monitoring:
+  prometheus: true
+  opentelemetry: false
