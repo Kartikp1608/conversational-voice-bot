@@ -1,6 +1,6 @@
 import os
 from typing import Optional, List
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -49,17 +49,17 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "gemini-2.5-flash"
     LLM_TEMPERATURE: float = 0.1
     LLM_MAX_TOKENS: int = 512
-    LLM_PROVIDER: str = "gemini_live"  # "gemini_live", "mock"
+    LLM_PROVIDER: str = "mock"  # "gemini_live", "mock"
     GOOGLE_APPLICATION_CREDENTIALS: str = "vertex_creds.json"
 
     # STT Settings (Deepgram / Google / Mock)
-    STT_PROVIDER: str = "deepgram"  # "deepgram", "google", "mock"
+    STT_PROVIDER: str = "mock"  # "deepgram", "google", "mock"
     STT_LANGUAGE_CODE: str = "en"
     STT_PUNCTUATION: bool = True
     STT_INTERIM_RESULTS: bool = True
 
     # TTS Settings (Deepgram / Google / Mock)
-    TTS_PROVIDER: str = "deepgram"  # "deepgram", "google", "mock"
+    TTS_PROVIDER: str = "mock"  # "deepgram", "google", "mock"
     TTS_VOICE_NAME: str = "aura-asteria-en"
     TTS_SPEAKING_RATE: float = 1.05
     TTS_PITCH: float = 0.0
@@ -81,6 +81,39 @@ class Settings(BaseSettings):
 
     # Rate Limiting
     RATE_LIMIT_CALLS_PER_MIN: int = 60
+
+    @model_validator(mode="after")
+    def validate_provider_credentials(self) -> "Settings":
+        """Validate that non-mock providers have required API credentials configured."""
+        llm = (self.LLM_PROVIDER or "").lower()
+        if llm in ["gemini", "gemini_live"]:
+            has_gemini_key = bool(self.GEMINI_API_KEY and not self.GEMINI_API_KEY.startswith("your_"))
+            has_google_creds = bool(self.GOOGLE_APPLICATION_CREDENTIALS and os.path.exists(self.GOOGLE_APPLICATION_CREDENTIALS))
+            if not has_gemini_key and not has_google_creds:
+                raise ValueError(
+                    f"LLM_PROVIDER is set to '{self.LLM_PROVIDER}', but neither GEMINI_API_KEY nor "
+                    f"valid GOOGLE_APPLICATION_CREDENTIALS ({self.GOOGLE_APPLICATION_CREDENTIALS}) was found."
+                )
+
+        stt = (self.STT_PROVIDER or "").lower()
+        if stt == "deepgram":
+            if not self.DEEPGRAM_API_KEY or self.DEEPGRAM_API_KEY.startswith("your_"):
+                raise ValueError("DEEPGRAM_API_KEY is required when STT_PROVIDER is set to 'deepgram'")
+        elif stt == "google":
+            has_creds = bool(self.GOOGLE_APPLICATION_CREDENTIALS and os.path.exists(self.GOOGLE_APPLICATION_CREDENTIALS))
+            if not has_creds and not self.VERTEX_PROJECT_ID:
+                raise ValueError("GOOGLE_APPLICATION_CREDENTIALS or VERTEX_PROJECT_ID is required when STT_PROVIDER is 'google'")
+
+        tts = (self.TTS_PROVIDER or "").lower()
+        if tts == "deepgram":
+            if not self.DEEPGRAM_API_KEY or self.DEEPGRAM_API_KEY.startswith("your_"):
+                raise ValueError("DEEPGRAM_API_KEY is required when TTS_PROVIDER is set to 'deepgram'")
+        elif tts == "google":
+            has_creds = bool(self.GOOGLE_APPLICATION_CREDENTIALS and os.path.exists(self.GOOGLE_APPLICATION_CREDENTIALS))
+            if not has_creds and not self.VERTEX_PROJECT_ID:
+                raise ValueError("GOOGLE_APPLICATION_CREDENTIALS or VERTEX_PROJECT_ID is required when TTS_PROVIDER is 'google'")
+
+        return self
 
 
 settings = Settings()

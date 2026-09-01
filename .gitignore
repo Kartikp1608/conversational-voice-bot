@@ -1,6 +1,7 @@
 # Environment and Secret Credential Files
 .env
 .env.*
+!.env.example
 vertex_creds.json
 *.pem
 *.key
