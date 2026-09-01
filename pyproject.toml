@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "conversational-voice-bot"
+version = "1.0.0"
+description = "Production Real-Time Low Latency AI Voice Gateway Engine"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Kartik Pal" }]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = [
+    "E501",  # Line length handled by black/formatter
+    "B008",  # Do not perform function calls in argument defaults (FastAPI Depends)
+    "B904",  # Within an except clause, raise exceptions with raise ... from err
+    "UP006", # Use standard collections (typing compatibility)
+    "UP035", # Deprecated typing imports
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "api",
+    "config",
+    "conversation",
+    "database",
+    "interruptions",
+    "llm",
+    "memory",
+    "monitoring",
+    "noise_filter",
+    "prompt_engine",
+    "stt",
+    "telephony",
+    "tool_executor",
+    "tts",
+    "utils",
+    "vad",
+    "voice_gateway",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=. --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "venv/*",
+    ".venv/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pass",
+]
