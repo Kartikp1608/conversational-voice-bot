@@ -1,6 +1,7 @@
 import os
 from typing import AsyncGenerator
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -38,7 +39,7 @@ TestAsyncSessionLocal = async_sessionmaker(
 )
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def configure_test_environment():
     """Ensure all provider keys and settings are set to mock for entire test session."""
     settings.LLM_PROVIDER = "mock"
