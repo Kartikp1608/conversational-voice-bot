@@ -3,6 +3,11 @@ from typing import Dict, Any
 from telephony.base_telephony import BaseTelephonyAdapter
 
 
+from logging_config import get_logger
+
+logger = get_logger("telephony.sip")
+
+
 class SIPAdapter(BaseTelephonyAdapter):
     """Generic SIP / WebRTC direct binary PCM stream adapter."""
 
@@ -25,6 +30,7 @@ class SIPAdapter(BaseTelephonyAdapter):
             try:
                 data = json.loads(raw_message)
                 return {"event": data.get("type", "unknown"), "data": data}
-            except Exception:
-                return {"event": "unknown"}
+            except json.JSONDecodeError as e:
+                logger.warning("Invalid JSON received in SIP media stream", error=str(e))
+                return {"event": "error", "error": f"Invalid JSON message: {str(e)}"}
         return {"event": "unknown"}

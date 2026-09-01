@@ -70,7 +70,12 @@ class TwilioAdapter(BaseTelephonyAdapter):
 
     def parse_media_event(self, raw_message: str) -> Dict[str, Any]:
         """Parse incoming JSON frame from Twilio WebSocket Media Stream (connected, start, media, stop)."""
-        data = json.loads(raw_message)
+        try:
+            data = json.loads(raw_message)
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning("Failed to decode Twilio media JSON event", error=str(e))
+            return {"event": "error", "error": str(e)}
+
         event_type = data.get("event")
 
         if event_type == "media":

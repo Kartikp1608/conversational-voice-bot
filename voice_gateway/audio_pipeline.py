@@ -99,11 +99,11 @@ class AudioPipeline:
         """Start streaming STT and output audio consumer loops."""
         self._is_running = True
         await self.stt.start_stream(self._on_stt_result)
-        asyncio.create_task(self._consume_outbound_audio(audio_output_callback))
+        self._consumer_task = asyncio.create_task(self._consume_outbound_audio(audio_output_callback))
         logger.info(f"AudioPipeline started for call {self.call_id}", session_id=self.session_id)
 
         # Trigger Initial Bot Greeting on Call Connect
-        asyncio.create_task(self._trigger_initial_greeting())
+        self._greeting_task = asyncio.create_task(self._trigger_initial_greeting())
 
     async def _trigger_initial_greeting(self) -> None:
         """Send instant bot greeting when call connects."""
@@ -239,13 +239,22 @@ class AudioPipeline:
     async def _consume_outbound_audio(self, callback: Callable[[bytes], Awaitable[None]]) -> None:
         """Consumer task sending queued PCM audio chunks to WebSocket client."""
         while self._is_running:
-            chunk = await self.outbound_audio_queue.get()
-            if chunk is not None:
-                await callback(chunk)
-                await asyncio.sleep(0.005)
+            try:
+                chunk = await self.outbound_audio_queue.get()
+                if chunk is not None:
+                    await callback(chunk)
+                    await asyncio.sleep(0.005)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.warning("Error consuming outbound audio frame", error=str(e))
 
     async def stop(self) -> None:
         """Clean pipeline shutdown."""
         self._is_running = False
+        if hasattr(self, "_consumer_task") and self._consumer_task and not self._consumer_task.done():
+            self._consumer_task.cancel()
+        if hasattr(self, "_greeting_task") and self._greeting_task and not self._greeting_task.done():
+            self._greeting_task.cancel()
         await self.stt.close()
         logger.info(f"AudioPipeline stopped for session {self.session_id}")

@@ -4,6 +4,11 @@ from pydantic import BaseModel, Field
 from tool_executor.base_tool import BaseTool
 
 
+from logging_config import get_logger
+
+logger = get_logger("tool_executor.webhook")
+
+
 class WebhookArgs(BaseModel):
     url: str = Field(..., description="Target HTTP REST API endpoint")
     method: str = Field("POST", description="HTTP Method: GET or POST")
@@ -28,4 +33,5 @@ class WebhookTool(BaseTool):
                     "response": resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text,
                 }
         except Exception as e:
+            logger.warning("Webhook HTTP call failed, falling back to simulation", error=str(e), url=url)
             return {"status": "simulated", "url": url, "payload": payload, "message": "Simulated successful webhook execution."}

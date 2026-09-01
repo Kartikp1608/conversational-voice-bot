@@ -37,7 +37,7 @@ class DeepgramSTT(BaseSTT):
             try:
                 await self._ws.send(chunk)
             except Exception as e:
-                pass
+                logger.warning("Failed to send audio chunk to Deepgram", error=str(e))
 
     async def _websocket_loop(self) -> None:
         url = (
@@ -86,7 +86,8 @@ class DeepgramSTT(BaseSTT):
                         if self._callback:
                             await self._callback(stt_res)
 
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
+                        logger.warning("Failed to decode Deepgram WS message JSON", error=str(e))
                         continue
 
         except Exception as e:
@@ -97,8 +98,8 @@ class DeepgramSTT(BaseSTT):
         if self._ws:
             try:
                 await self._ws.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Error closing Deepgram websocket", error=str(e))
         if self._ws_task and not self._ws_task.done():
             self._ws_task.cancel()
         logger.info("Closed Deepgram STT stream")

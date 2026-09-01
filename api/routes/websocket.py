@@ -26,8 +26,8 @@ async def generic_voice_websocket(websocket: WebSocket, session_id: str, prompt_
     async def send_audio_to_client(pcm_chunk: bytes) -> None:
         try:
             await websocket.send_bytes(pcm_chunk)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to send audio chunk to websocket client", session_id=session_id, error=str(e))
 
     await pipeline.start(send_audio_to_client)
 
@@ -45,8 +45,8 @@ async def generic_voice_websocket(websocket: WebSocket, session_id: str, prompt_
                         await websocket.send_text(json.dumps({"type": "user_transcript", "text": user_text}))
                         # Trigger Voice AI turn
                         await pipeline._generate_and_speak_response(user_text)
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.warning("Invalid JSON received from websocket client", session_id=session_id, error=str(e))
 
     except WebSocketDisconnect:
         logger.info(f"WebSocket client disconnected: {session_id}", session_id=session_id)
@@ -76,8 +76,8 @@ async def twilio_media_stream_websocket(websocket: WebSocket, call_id: str, prom
             try:
                 payload_json = TwilioAdapter.format_outbound_media_payload(stream_sid, pcm_chunk)
                 await websocket.send_text(payload_json)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to send mu-law audio chunk to Twilio stream", call_id=call_id, error=str(e))
 
     await pipeline.start(send_mulaw_to_twilio)
 
