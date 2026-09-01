@@ -30,8 +30,12 @@ async def twilio_inbound_voice_webhook(request: Request):
 @router.post("/twilio/status")
 async def twilio_status_callback(request: Request):
     """Status callback for call event logging."""
-    form_data = await request.form()
-    call_sid = form_data.get("CallSid")
-    call_status = form_data.get("CallStatus")
+    try:
+        form_data = await request.form()
+        call_sid = form_data.get("CallSid")
+        call_status = form_data.get("CallStatus")
+    except Exception as e:
+        logger.warning("Failed to parse Twilio status callback form data", error=str(e))
+        call_sid, call_status = None, None
     logger.info(f"Twilio Call {call_sid} status update: {call_status}", call_sid=call_sid, status=call_status)
     return {"status": "ok"}
