@@ -202,14 +202,14 @@ class GeminiLiveLLM(BaseLLM):
 
         elif "hello" in last_user_msg or "hi" in last_user_msg:
             resp_text = "Hello! Welcome to our service. How can I assist you today?"
-        elif "book" in last_user_msg or "appointment" in last_user_msg or "schedule" in last_user_msg:
-            resp_text = "I would be glad to assist with your booking! What date and time work best for you?"
-        elif "tomorrow" in last_user_msg or "date" in last_user_msg or "time" in last_user_msg or "pm" in last_user_msg or "am" in last_user_msg:
+        elif "tomorrow" in last_user_msg or "am" in last_user_msg or "pm" in last_user_msg or "date" in last_user_msg:
             yield LLMResponseChunk(
                 tool_call_name="book_appointment",
                 tool_call_args={"date": "2026-07-29", "time": "10:00 AM", "service": "General Consultation"}
             )
             return
+        elif "book" in last_user_msg or "appointment" in last_user_msg or "schedule" in last_user_msg:
+            resp_text = "I would be glad to assist with your booking! What date and time work best for you?"
         elif "cancel" in last_user_msg or "wrong number" in last_user_msg or "bye" in last_user_msg:
             resp_text = "No problem at all! Have a great day."
         else:
