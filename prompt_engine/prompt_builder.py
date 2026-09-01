@@ -1,4 +1,5 @@
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List
+
 from prompt_engine.prompt_loader import PromptLoader
 
 
@@ -7,15 +8,15 @@ class PromptBuilder:
     Compiles system instructions from business configuration prompts, active state, short-term memory, and RAG knowledge.
     """
 
-    def __init__(self, loader: Optional[PromptLoader] = None):
+    def __init__(self, loader: PromptLoader | None = None):
         self.loader = loader or PromptLoader()
 
     def build_system_prompt(
         self,
         prompt_id: str,
         current_stage: str = "GREETING",
-        context_vars: Optional[Dict[str, Any]] = None,
-        rag_facts: Optional[List[str]] = None,
+        context_vars: Dict[str, Any] | None = None,
+        rag_facts: List[str] | None = None,
     ) -> str:
         data = self.loader.load_prompt(prompt_id)
         context_vars = context_vars or {}
@@ -26,7 +27,9 @@ class PromptBuilder:
         role = data.get("role", "Voice AI Assistant")
         personality = data.get("personality", "Friendly and efficient.")
         tone = data.get("tone", "Professional")
-        sections.append(f"=== YOUR ROLE & PERSONALITY ===\nRole: {role}\nPersonality: {personality}\nTone: {tone}\n")
+        sections.append(
+            f"=== YOUR ROLE & PERSONALITY ===\nRole: {role}\nPersonality: {personality}\nTone: {tone}\n"
+        )
 
         # Rules
         rules = data.get("rules", [])
@@ -48,7 +51,9 @@ class PromptBuilder:
         if current_stage in workflow:
             sections.append(f"Stage Directive: {workflow[current_stage]}")
         else:
-            sections.append("Stage Directive: Guide the customer toward resolving their request efficiently.")
+            sections.append(
+                "Stage Directive: Guide the customer toward resolving their request efficiently."
+            )
         sections.append("")
 
         # Knowledge Base / RAG Context
@@ -66,6 +71,10 @@ class PromptBuilder:
 
         # Fallback & Escalation Directives
         fallbacks = data.get("fallbacks", [])
+        if fallbacks:
+            fb_str = "\n".join([f"- {f}" for f in fallbacks])
+            sections.append(f"=== FALLBACK PROTOCOL ===\n{fb_str}\n")
+
         escalations = data.get("escalations", [])
         if escalations:
             esc_str = "\n".join([f"- {e}" for e in escalations])

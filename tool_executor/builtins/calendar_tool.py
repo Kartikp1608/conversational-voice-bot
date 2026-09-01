@@ -1,5 +1,7 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 from pydantic import BaseModel, Field
+
 from tool_executor.base_tool import BaseTool
 
 
@@ -7,7 +9,7 @@ class CalendarBookingArgs(BaseModel):
     date: str = Field(..., description="Target appointment date (YYYY-MM-DD)")
     time: str = Field(..., description="Target time slot (e.g. 10:00 AM)")
     service: str = Field("General Consultation", description="Service type or appointment reason")
-    patient_name: Optional[str] = Field(None, description="Patient or customer name")
+    patient_name: str | None = Field(None, description="Patient or customer name")
 
 
 class CalendarTool(BaseTool):
@@ -20,7 +22,7 @@ class CalendarTool(BaseTool):
         date: str,
         time: str,
         service: str = "General Consultation",
-        patient_name: Optional[str] = None,
+        patient_name: str | None = None,
     ) -> Dict[str, Any]:
         return {
             "booking_id": "APT-88219",

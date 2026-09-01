@@ -1,7 +1,7 @@
-import pytest
 import numpy as np
-from vad.vad_engine import VADEngine, VADState
+
 from utils.audio_utils import AudioUtils
+from vad.vad_engine import VADEngine, VADState
 
 
 def test_vad_silence_detection():
@@ -16,14 +16,14 @@ def test_vad_silence_detection():
 
 def test_vad_speech_start_and_end():
     vad = VADEngine(speech_pad_ms=40, silence_timeout_ms=60)
-    
+
     # Generate loud speech frame (sine wave)
     samples = (np.sin(np.linspace(0, 1, 320)) * 20000).astype(np.int16).tobytes()
     silence_frame = AudioUtils.create_silence(20)
 
     # Frame 1: speech detected but pad not reached
     state, _, _ = vad.process_frame(samples)
-    
+
     # Frame 2: speech pad reached -> SPEECH_START
     state, _, _ = vad.process_frame(samples)
     assert state == VADState.SPEECH_START

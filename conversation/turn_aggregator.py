@@ -1,6 +1,6 @@
 import asyncio
-import time
-from typing import List, Callable, Awaitable, Optional
+from typing import Awaitable, Callable, List
+
 from logging_config import get_logger
 
 logger = get_logger("conversation.turn_aggregator")
@@ -12,15 +12,39 @@ class TurnAggregator:
     """
 
     TRAILING_CONNECTORS = {
-        "at", "and", "or", "to", "is", "my", "for", "the", "a", "an", "in", "on", "with", "about",
-        "of", "that", "this", "because", "so", "was", "were", "are", "am", "have", "had", "will"
+        "at",
+        "and",
+        "or",
+        "to",
+        "is",
+        "my",
+        "for",
+        "the",
+        "a",
+        "an",
+        "in",
+        "on",
+        "with",
+        "about",
+        "of",
+        "that",
+        "this",
+        "because",
+        "so",
+        "was",
+        "were",
+        "are",
+        "am",
+        "have",
+        "had",
+        "will",
     }
 
     def __init__(self, debounce_ms: float = 750.0):
         self.debounce_sec = debounce_ms / 1000.0
         self._buffer: List[str] = []
-        self._timer_task: Optional[asyncio.Task] = None
-        self._callback: Optional[Callable[[str], Awaitable[None]]] = None
+        self._timer_task: asyncio.Task | None = None
+        self._callback: Callable[[str], Awaitable[None]] | None = None
 
     def add_transcript(self, text: str, callback: Callable[[str], Awaitable[None]]) -> None:
         """Ingest STT transcript fragment, buffer it, and start/reset debouncer timer."""
@@ -58,7 +82,10 @@ class TurnAggregator:
         self._buffer.clear()
 
         if final_utterance and self._callback:
-            logger.info(f"Finalized Aggregated User Utterance: '{final_utterance}'", utterance=final_utterance)
+            logger.info(
+                f"Finalized Aggregated User Utterance: '{final_utterance}'",
+                utterance=final_utterance,
+            )
             await self._callback(final_utterance)
 
     def reset(self) -> None:

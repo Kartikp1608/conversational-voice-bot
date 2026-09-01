@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Optional, List, Dict, Any
+from typing import Dict, List
+
 from logging_config import get_logger
 
 logger = get_logger("conversation.state_machine")
@@ -20,10 +21,24 @@ class StateMachine:
     """Production State Machine governing call stage transitions and business flow requirements."""
 
     VALID_TRANSITIONS: Dict[CallStage, List[CallStage]] = {
-        CallStage.GREETING: [CallStage.VERIFICATION, CallStage.BUSINESS_LOGIC, CallStage.CLOSING, CallStage.ESCALATION],
+        CallStage.GREETING: [
+            CallStage.VERIFICATION,
+            CallStage.BUSINESS_LOGIC,
+            CallStage.CLOSING,
+            CallStage.ESCALATION,
+        ],
         CallStage.VERIFICATION: [CallStage.BUSINESS_LOGIC, CallStage.ESCALATION, CallStage.CLOSING],
-        CallStage.BUSINESS_LOGIC: [CallStage.TOOL_EXECUTION, CallStage.CONFIRMATION, CallStage.ESCALATION, CallStage.CLOSING],
-        CallStage.TOOL_EXECUTION: [CallStage.CONFIRMATION, CallStage.BUSINESS_LOGIC, CallStage.ESCALATION],
+        CallStage.BUSINESS_LOGIC: [
+            CallStage.TOOL_EXECUTION,
+            CallStage.CONFIRMATION,
+            CallStage.ESCALATION,
+            CallStage.CLOSING,
+        ],
+        CallStage.TOOL_EXECUTION: [
+            CallStage.CONFIRMATION,
+            CallStage.BUSINESS_LOGIC,
+            CallStage.ESCALATION,
+        ],
         CallStage.CONFIRMATION: [CallStage.CLOSING, CallStage.BUSINESS_LOGIC, CallStage.ESCALATION],
         CallStage.ESCALATION: [CallStage.CLOSING, CallStage.ENDED],
         CallStage.CLOSING: [CallStage.ENDED],
@@ -32,7 +47,7 @@ class StateMachine:
 
     def __init__(self, initial_stage: CallStage = CallStage.GREETING):
         self.current_stage = initial_stage
-        self.previous_stage: Optional[CallStage] = None
+        self.previous_stage: CallStage | None = None
 
     def transition_to(self, target_stage: CallStage) -> bool:
         """Attempt stage transition. Returns True if valid transition, False otherwise."""

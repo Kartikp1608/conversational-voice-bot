@@ -1,7 +1,8 @@
 import pytest
-from tool_executor.registry import ToolRegistry
-from tool_executor.builtins.crm_tool import CRMTool
+
 from tool_executor.builtins.calendar_tool import CalendarTool
+from tool_executor.builtins.crm_tool import CRMTool
+from tool_executor.registry import ToolRegistry
 
 
 @pytest.mark.asyncio

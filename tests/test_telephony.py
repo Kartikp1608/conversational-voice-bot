@@ -1,10 +1,11 @@
-import json
 import base64
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from telephony.twilio_adapter import TwilioAdapter
+
 from telephony.sip_adapter import SIPAdapter
-from telephony.base_telephony import BaseTelephonyAdapter
+from telephony.twilio_adapter import TwilioAdapter
 from utils.audio_utils import AudioUtils
 
 
@@ -69,14 +70,16 @@ async def test_twilio_adapter_real_outbound_call_error():
 
 def test_twilio_parse_media_event_start():
     adapter = TwilioAdapter()
-    start_payload = json.dumps({
-        "event": "start",
-        "streamSid": "MZ12345",
-        "start": {
-            "callSid": "CA999",
-            "mediaFormat": {"encoding": "audio/x-mulaw", "sampleRate": 8000, "channels": 1},
-        },
-    })
+    start_payload = json.dumps(
+        {
+            "event": "start",
+            "streamSid": "MZ12345",
+            "start": {
+                "callSid": "CA999",
+                "mediaFormat": {"encoding": "audio/x-mulaw", "sampleRate": 8000, "channels": 1},
+            },
+        }
+    )
     event = adapter.parse_media_event(start_payload)
     assert event["event"] == "start"
     assert event["stream_sid"] == "MZ12345"
@@ -90,14 +93,16 @@ def test_twilio_parse_media_event_media():
     mulaw_bytes = AudioUtils.pcm_to_mulaw(pcm_bytes)
     b64_str = base64.b64encode(mulaw_bytes).decode("utf-8")
 
-    media_payload = json.dumps({
-        "event": "media",
-        "streamSid": "MZ12345",
-        "media": {
-            "payload": b64_str,
-            "track": "inbound",
-        },
-    })
+    media_payload = json.dumps(
+        {
+            "event": "media",
+            "streamSid": "MZ12345",
+            "media": {
+                "payload": b64_str,
+                "track": "inbound",
+            },
+        }
+    )
     event = adapter.parse_media_event(media_payload)
     assert event["event"] == "media"
     assert event["stream_sid"] == "MZ12345"

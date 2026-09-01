@@ -1,5 +1,5 @@
 import pytest
-import asyncio
+
 from interruptions.interrupt_manager import InterruptManager
 from utils.async_helpers import BoundedAudioQueue
 

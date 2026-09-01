@@ -1,11 +1,13 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict
+
 from pydantic import BaseModel, Field
+
 from tool_executor.base_tool import BaseTool
 
 
 class CRMLookupArgs(BaseModel):
-    customer_id: Optional[str] = Field(None, description="Unique customer ID")
-    phone_number: Optional[str] = Field(None, description="Customer phone number")
+    customer_id: str | None = Field(None, description="Unique customer ID")
+    phone_number: str | None = Field(None, description="Customer phone number")
 
 
 class CRMTool(BaseTool):
@@ -13,7 +15,9 @@ class CRMTool(BaseTool):
     description = "Lookup customer profile, balance, and subscription metadata in CRM."
     args_schema = CRMLookupArgs
 
-    async def execute(self, customer_id: Optional[str] = None, phone_number: Optional[str] = None) -> Dict[str, Any]:
+    async def execute(
+        self, customer_id: str | None = None, phone_number: str | None = None
+    ) -> Dict[str, Any]:
         # Simulated production CRM response
         return {
             "customer_id": customer_id or "CUST-9842",

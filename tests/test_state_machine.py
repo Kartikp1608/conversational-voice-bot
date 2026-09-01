@@ -1,4 +1,4 @@
-from conversation.state_machine import StateMachine, CallStage
+from conversation.state_machine import CallStage, StateMachine
 
 
 def test_state_machine_valid_transitions():

@@ -1,7 +1,8 @@
-import sys
 import logging
+import sys
+from typing import Any
+
 import structlog
-from typing import Any, Dict
 
 
 def configure_logging(log_level: str = "INFO") -> None:
@@ -15,7 +16,7 @@ def configure_logging(log_level: str = "INFO") -> None:
         level=logging_level,
     )
 
-    processors = [
+    processors: list[Any] = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         structlog.processors.StackInfoRenderer(),

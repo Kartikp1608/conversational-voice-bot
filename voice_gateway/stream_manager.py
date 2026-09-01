@@ -1,8 +1,8 @@
-import asyncio
-from typing import Optional, List
-from utils.audio_utils import AudioUtils
-from utils.async_helpers import BoundedAudioQueue
+from typing import List
+
 from logging_config import get_logger
+from utils.async_helpers import BoundedAudioQueue
+from utils.audio_utils import AudioUtils
 
 logger = get_logger("voice_gateway.stream_manager")
 
@@ -22,8 +22,8 @@ class AudioStreamManager:
         self.inbound_buffer.extend(raw_pcm)
         frames = []
         while len(self.inbound_buffer) >= self.chunk_bytes:
-            frame = bytes(self.inbound_buffer[:self.chunk_bytes])
-            del self.inbound_buffer[:self.chunk_bytes]
+            frame = bytes(self.inbound_buffer[: self.chunk_bytes])
+            del self.inbound_buffer[: self.chunk_bytes]
             frames.append(frame)
         return frames
 

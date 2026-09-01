@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator, Callable, Awaitable, Optional
+from typing import Awaitable, Callable
 
 
 class STTResult:

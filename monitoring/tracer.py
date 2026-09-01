@@ -1,13 +1,13 @@
-import typing
 from logging_config import get_logger
 
 logger = get_logger("tracer")
 
 try:
     from opentelemetry import trace
+    from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-    from opentelemetry.sdk.resources import Resource
+
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False

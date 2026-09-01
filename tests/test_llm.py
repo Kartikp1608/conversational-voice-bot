@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from llm.mock_llm import MockLLM
+
+import pytest
+
 from llm.gemini_live import GeminiLiveLLM
-from llm.base_llm import LLMResponseChunk
+from llm.mock_llm import MockLLM
 from utils.async_helpers import CancellationToken
 
 
@@ -23,7 +24,9 @@ async def test_mock_llm_streaming_text():
 @pytest.mark.asyncio
 async def test_mock_llm_tool_call_generation():
     llm = MockLLM()
-    messages = [{"role": "user", "content": "I want to schedule an appointment for tomorrow at 10 AM"}]
+    messages = [
+        {"role": "user", "content": "I want to schedule an appointment for tomorrow at 10 AM"}
+    ]
     chunks = []
 
     async for chunk in llm.generate_stream(system_prompt="You are an assistant", messages=messages):
@@ -32,6 +35,7 @@ async def test_mock_llm_tool_call_generation():
     tool_chunks = [c for c in chunks if c.tool_call_name]
     assert len(tool_chunks) > 0
     assert tool_chunks[0].tool_call_name == "book_appointment"
+    assert tool_chunks[0].tool_call_args is not None
     assert "date" in tool_chunks[0].tool_call_args
 
 
@@ -141,7 +145,12 @@ async def test_gemini_generate_stream_vertex_mock():
                     "content": {
                         "parts": [
                             {"text": "Vertex AI Live Response"},
-                            {"functionCall": {"name": "crm_lookup", "args": {"customer_id": "123"}}},
+                            {
+                                "functionCall": {
+                                    "name": "crm_lookup",
+                                    "args": {"customer_id": "123"},
+                                }
+                            },
                         ]
                     }
                 }

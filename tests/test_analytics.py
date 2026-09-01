@@ -1,4 +1,3 @@
-import time
 from analytics.call_analytics import CallAnalyticsTracker
 
 

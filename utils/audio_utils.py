@@ -1,8 +1,8 @@
 import audioop
 import math
-import struct
+from typing import List
+
 import numpy as np
-from typing import List, Tuple
 
 
 class AudioUtils:
@@ -30,13 +30,13 @@ class AudioUtils:
         """Calculate Root Mean Square (RMS) energy normalized between 0.0 and 1.0."""
         if not pcm_data or len(pcm_data) < 2:
             return 0.0
-        
+
         # Fast numpy conversion for high throughput
         samples = np.frombuffer(pcm_data, dtype=np.int16).astype(np.float32)
         if len(samples) == 0:
             return 0.0
-        
-        mean_square = np.mean(samples ** 2)
+
+        mean_square = np.mean(samples**2)
         rms = math.sqrt(float(mean_square))
         # Normalize to 0.0 - 1.0 range (32768 maximum value for int16)
         return min(1.0, rms / 32768.0)
@@ -56,15 +56,17 @@ class AudioUtils:
         return int((ms / 1000.0) * bytes_per_sec)
 
     @staticmethod
-    def chunk_audio(pcm_data: bytes, chunk_duration_ms: int = 20, sample_rate: int = 16000) -> List[bytes]:
+    def chunk_audio(
+        pcm_data: bytes, chunk_duration_ms: int = 20, sample_rate: int = 16000
+    ) -> List[bytes]:
         """Split a continuous PCM audio buffer into fixed millisecond frame chunks."""
         chunk_size = AudioUtils.ms_to_bytes(chunk_duration_ms, sample_rate)
         if chunk_size <= 0:
             return [pcm_data]
-        
+
         chunks = []
         for i in range(0, len(pcm_data), chunk_size):
-            chunk = pcm_data[i:i + chunk_size]
+            chunk = pcm_data[i : i + chunk_size]
             if len(chunk) == chunk_size:
                 chunks.append(chunk)
             else:

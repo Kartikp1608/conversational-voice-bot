@@ -1,4 +1,3 @@
-import pytest
 from conversation.conversation_manager import ConversationManager
 from conversation.state_machine import CallStage
 
@@ -15,6 +14,7 @@ def test_conversation_manager_stage_progression():
     # Step 2: User confirms booking -> moves to tool execution
     p2 = cm.process_user_turn("Please confirm and book.")
     assert cm.state_machine.current_stage == CallStage.TOOL_EXECUTION
+    assert len(p2) > 0
 
     # Step 3: Record assistant turn
     cm.record_assistant_turn("Appointment is booked.")

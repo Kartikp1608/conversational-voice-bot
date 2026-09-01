@@ -1,9 +1,10 @@
-from typing import List, Dict, Any, Optional
-from conversation.state_machine import StateMachine, CallStage
-from memory.short_term_memory import ShortTermMemory
-from memory.knowledge_base import KnowledgeBase
-from prompt_engine.prompt_builder import PromptBuilder
+from typing import Any, Dict, List
+
+from conversation.state_machine import CallStage, StateMachine
 from logging_config import get_logger
+from memory.knowledge_base import KnowledgeBase
+from memory.short_term_memory import ShortTermMemory
+from prompt_engine.prompt_builder import PromptBuilder
 
 logger = get_logger("conversation_manager")
 

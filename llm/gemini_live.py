@@ -1,11 +1,13 @@
-import os
-import json
 import asyncio
+import json
+import os
+from typing import Any, AsyncGenerator, Dict, List
+
 import httpx
-from typing import AsyncGenerator, List, Dict, Any, Optional
+
 from llm.base_llm import BaseLLM, LLMResponseChunk
-from utils.async_helpers import CancellationToken
 from logging_config import get_logger
+from utils.async_helpers import CancellationToken
 
 logger = get_logger("llm.gemini_live")
 
@@ -15,11 +17,11 @@ class GeminiLiveLLM(BaseLLM):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "gemini-2.5-flash",
         temperature: float = 0.1,
         creds_filename: str = "vertex_creds.json",
-        creds_file: Optional[str] = None,
+        creds_file: str | None = None,
         location: str = "asia-south1",
     ):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
@@ -28,7 +30,7 @@ class GeminiLiveLLM(BaseLLM):
         self.location = location
 
         self.project_id: str = "ml-odio"
-        self.credentials_path: Optional[str] = None
+        self.credentials_path: str | None = None
         self._credentials = None
 
         target_file = creds_file or creds_filename
@@ -46,24 +48,29 @@ class GeminiLiveLLM(BaseLLM):
         if self.credentials_path:
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = self.credentials_path
             try:
-                with open(self.credentials_path, "r", encoding="utf-8") as f:
+                with open(self.credentials_path, encoding="utf-8") as f:
                     creds_data = json.load(f)
                     self.project_id = creds_data.get("project_id", "ml-odio")
 
                 from google.oauth2 import service_account
-                self._credentials = service_account.Credentials.from_service_account_file(
-                    self.credentials_path,
-                    scopes=["https://www.googleapis.com/auth/cloud-platform"]
-                )
-                logger.info(f"Loaded Google Vertex AI Credentials file: {self.credentials_path} (PROJECT ID: {self.project_id})")
-            except Exception as e:
-                logger.warning(f"Error reading credentials file {self.credentials_path}", error=str(e))
 
-    def _get_access_token(self) -> Optional[str]:
+                self._credentials = service_account.Credentials.from_service_account_file(
+                    self.credentials_path, scopes=["https://www.googleapis.com/auth/cloud-platform"]
+                )
+                logger.info(
+                    f"Loaded Google Vertex AI Credentials file: {self.credentials_path} (PROJECT ID: {self.project_id})"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Error reading credentials file {self.credentials_path}", error=str(e)
+                )
+
+    def _get_access_token(self) -> str | None:
         if not self._credentials:
             return None
         try:
             import google.auth.transport.requests
+
             request = google.auth.transport.requests.Request()
             self._credentials.refresh(request)
             return self._credentials.token
@@ -73,7 +80,7 @@ class GeminiLiveLLM(BaseLLM):
 
     def _format_contents_history(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Sanitize and format multi-turn history into valid alternating user/model turns for Vertex AI."""
-        contents = []
+        contents: List[Dict[str, Any]] = []
         last_role = None
 
         for msg in messages:
@@ -85,20 +92,15 @@ class GeminiLiveLLM(BaseLLM):
             if role == last_role:
                 # Merge consecutive turns of the same role
                 if contents:
-                    contents[-1]["parts"][0]["text"] += f"\n{text}"
+                    parts: Any = contents[-1]["parts"]
+                    parts[0]["text"] = str(parts[0]["text"]) + f"\n{text}"
             else:
-                contents.append({
-                    "role": role,
-                    "parts": [{"text": text}]
-                })
+                contents.append({"role": role, "parts": [{"text": text}]})
                 last_role = role
 
         # Vertex AI requires contents array to start with 'user' turn
         if contents and contents[0]["role"] == "model":
-            contents.insert(0, {
-                "role": "user",
-                "parts": [{"text": "Hello"}]
-            })
+            contents.insert(0, {"role": "user", "parts": [{"text": "Hello"}]})
 
         return contents
 
@@ -106,24 +108,22 @@ class GeminiLiveLLM(BaseLLM):
         self,
         system_prompt: str,
         messages: List[Dict[str, Any]],
-        tools_schema: Optional[List[Dict[str, Any]]] = None,
-        cancellation_token: Optional[CancellationToken] = None,
+        tools_schema: List[Dict[str, Any]] | None = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> AsyncGenerator[LLMResponseChunk, None]:
 
         access_token = self._get_access_token()
         contents = self._format_contents_history(messages)
 
         payload = {
-            "system_instruction": {
-                "parts": [{"text": system_prompt}]
-            },
+            "system_instruction": {"parts": [{"text": system_prompt}]},
             "contents": contents,
             "generationConfig": {
                 "temperature": self.temperature,
                 "topP": 0.8,
                 "topK": 10,
                 "maxOutputTokens": 256,
-            }
+            },
         }
 
         success = False
@@ -142,7 +142,7 @@ class GeminiLiveLLM(BaseLLM):
                         success = True
                         data = resp.json()
                         candidates = data.get("candidates", []) if isinstance(data, dict) else []
-                        
+
                         for cand in candidates:
                             if cancellation_token and cancellation_token.is_cancelled:
                                 return
@@ -151,7 +151,9 @@ class GeminiLiveLLM(BaseLLM):
                             for part in parts:
                                 if "text" in part and part["text"]:
                                     text_content = part["text"]
-                                    logger.info(f"Vertex AI Response: '{text_content}'", text=text_content)
+                                    logger.info(
+                                        f"Vertex AI Response: '{text_content}'", text=text_content
+                                    )
                                     yield LLMResponseChunk(text_delta=text_content)
                                 elif "functionCall" in part:
                                     fc = part["functionCall"]
@@ -160,13 +162,17 @@ class GeminiLiveLLM(BaseLLM):
                                         tool_call_args=fc.get("args", {}),
                                     )
                     else:
-                        logger.warning(f"Vertex AI API status {resp.status_code}: {resp.text[:200]}")
+                        logger.warning(
+                            f"Vertex AI API status {resp.status_code}: {resp.text[:200]}"
+                        )
             except Exception as e:
                 logger.error(f"Vertex AI API error: {e}")
 
         if not success:
             logger.info("Using intelligent multi-turn conversational fallback")
-            async for chunk in self._intelligent_conversational_response(messages, system_prompt, cancellation_token):
+            async for chunk in self._intelligent_conversational_response(
+                messages, system_prompt, cancellation_token
+            ):
                 yield chunk
 
         yield LLMResponseChunk(is_finished=True)
@@ -175,12 +181,11 @@ class GeminiLiveLLM(BaseLLM):
         self,
         messages: List[Dict[str, Any]],
         system_prompt: str,
-        cancellation_token: Optional[CancellationToken],
+        cancellation_token: CancellationToken | None,
     ) -> AsyncGenerator[LLMResponseChunk, None]:
 
         # Search past user turns for mentioned details/entities
         all_user_texts = [m["content"] for m in messages if m.get("role") == "user"]
-        full_user_history = " ".join(all_user_texts).lower()
         last_user_msg = (messages[-1]["content"] if messages else "").lower()
 
         # Context Memory Recall
@@ -196,20 +201,35 @@ class GeminiLiveLLM(BaseLLM):
 
         elif "what did i say" in last_user_msg or "remember" in last_user_msg:
             if len(all_user_texts) > 1:
-                resp_text = f"Earlier you mentioned: '{all_user_texts[-2]}'. How can I help you with that?"
+                resp_text = (
+                    f"Earlier you mentioned: '{all_user_texts[-2]}'. How can I help you with that?"
+                )
             else:
                 resp_text = "You just started the conversation with me!"
 
         elif "hello" in last_user_msg or "hi" in last_user_msg:
             resp_text = "Hello! Welcome to our service. How can I assist you today?"
-        elif "tomorrow" in last_user_msg or "am" in last_user_msg or "pm" in last_user_msg or "date" in last_user_msg:
+        elif (
+            "tomorrow" in last_user_msg
+            or "am" in last_user_msg
+            or "pm" in last_user_msg
+            or "date" in last_user_msg
+        ):
             yield LLMResponseChunk(
                 tool_call_name="book_appointment",
-                tool_call_args={"date": "2026-07-29", "time": "10:00 AM", "service": "General Consultation"}
+                tool_call_args={
+                    "date": "2026-07-29",
+                    "time": "10:00 AM",
+                    "service": "General Consultation",
+                },
             )
             return
-        elif "book" in last_user_msg or "appointment" in last_user_msg or "schedule" in last_user_msg:
-            resp_text = "I would be glad to assist with your booking! What date and time work best for you?"
+        elif (
+            "book" in last_user_msg or "appointment" in last_user_msg or "schedule" in last_user_msg
+        ):
+            resp_text = (
+                "I would be glad to assist with your booking! What date and time work best for you?"
+            )
         elif "cancel" in last_user_msg or "wrong number" in last_user_msg or "bye" in last_user_msg:
             resp_text = "No problem at all! Have a great day."
         else:

@@ -12,7 +12,7 @@ class AudioFilter:
         """Apply noise gate and DC offset removal on 16-bit PCM audio frame."""
         if not pcm_bytes:
             return b""
-        
+
         samples = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32)
         if len(samples) == 0:
             return pcm_bytes

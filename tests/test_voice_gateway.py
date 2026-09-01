@@ -1,11 +1,13 @@
 import asyncio
-import pytest
 from unittest.mock import AsyncMock
-from voice_gateway.audio_pipeline import AudioPipeline
-from voice_gateway.session_manager import SessionManager, VoiceSession
-from voice_gateway.stream_manager import AudioStreamManager
+
+import pytest
+
 from stt.base_stt import STTResult
 from utils.audio_utils import AudioUtils
+from voice_gateway.audio_pipeline import AudioPipeline
+from voice_gateway.session_manager import SessionManager
+from voice_gateway.stream_manager import AudioStreamManager
 
 
 def test_session_manager_lifecycle():
@@ -49,7 +51,9 @@ async def test_audio_stream_manager_queue():
 
 @pytest.mark.asyncio
 async def test_audio_pipeline_execution():
-    pipeline = AudioPipeline(session_id="sess-gw-1", call_id="call-gw-1", prompt_id="healthcare_appointment")
+    pipeline = AudioPipeline(
+        session_id="sess-gw-1", call_id="call-gw-1", prompt_id="healthcare_appointment"
+    )
     received_audio_chunks = []
 
     async def output_callback(chunk: bytes):
@@ -63,7 +67,9 @@ async def test_audio_pipeline_execution():
         await pipeline.process_inbound_pcm_frame(frame)
 
     # Trigger STT result
-    stt_res = STTResult(text="Yes please schedule appointment", is_final=True, confidence=0.99, latency_ms=25.0)
+    stt_res = STTResult(
+        text="Yes please schedule appointment", is_final=True, confidence=0.99, latency_ms=25.0
+    )
     await pipeline._on_stt_result(stt_res)
 
     await asyncio.sleep(0.15)

@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional, Any
 
 
 class CancellationToken:
@@ -32,13 +31,13 @@ class BoundedAudioQueue:
     """Async bounded queue for streaming audio frames with instant flush capability on interruption."""
 
     def __init__(self, maxsize: int = 100):
-        self.queue: asyncio.Queue[Optional[bytes]] = asyncio.Queue(maxsize=maxsize)
+        self.queue: asyncio.Queue[bytes | None] = asyncio.Queue(maxsize=maxsize)
 
-    async def put(self, chunk: Optional[bytes]) -> None:
+    async def put(self, chunk: bytes | None) -> None:
         """Put audio chunk into stream queue."""
         await self.queue.put(chunk)
 
-    async def get(self) -> Optional[bytes]:
+    async def get(self) -> bytes | None:
         """Get audio chunk from queue."""
         return await self.queue.get()
 

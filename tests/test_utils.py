@@ -1,9 +1,11 @@
 import asyncio
-import pytest
+
 import numpy as np
+import pytest
+
 from noise_filter.audio_filter import AudioFilter
+from utils.async_helpers import BoundedAudioQueue, CancellationToken
 from utils.audio_utils import AudioUtils
-from utils.async_helpers import CancellationToken, BoundedAudioQueue
 
 
 def test_audio_filter_processing():

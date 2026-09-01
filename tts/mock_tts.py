@@ -1,9 +1,10 @@
 import asyncio
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
+
+from logging_config import get_logger
 from tts.base_tts import BaseTTS
 from utils.async_helpers import CancellationToken
 from utils.audio_utils import AudioUtils
-from logging_config import get_logger
 
 logger = get_logger("tts.mock")
 
@@ -17,7 +18,7 @@ class MockTTS(BaseTTS):
     async def synthesize_stream(
         self,
         text_stream: AsyncGenerator[str, None],
-        cancellation_token: Optional[CancellationToken] = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> AsyncGenerator[bytes, None]:
         char_count = 0
         async for token in text_stream:

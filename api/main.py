@@ -1,13 +1,20 @@
 import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+
+from api.routes import (
+    calls_router,
+    health_router,
+    prompts_router,
+    webhooks_router,
+    websocket_router,
+)
 from config.settings import settings
-from logging_config import configure_logging, get_logger
 from database.db import init_db
-from api.routes import health_router, calls_router, webhooks_router, prompts_router, websocket_router
+from logging_config import configure_logging, get_logger
 
 configure_logging("INFO")
 logger = get_logger("main")
@@ -32,14 +39,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 # Root endpoint serving Web Audio Tester
 @app.get("/", response_class=HTMLResponse)
 async def get_web_tester():
     file_path = os.path.join("static", "index.html")
     if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return f.read()
     return "<h1>Voice AI Platform Server Running</h1>"
+
 
 # CORS Middleware
 app.add_middleware(
@@ -59,4 +68,5 @@ app.include_router(websocket_router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("api.main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG)

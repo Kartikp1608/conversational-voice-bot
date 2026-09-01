@@ -1,11 +1,13 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from tool_executor.registry import ToolRegistry
-from tool_executor.builtins.crm_tool import CRMTool
+
 from tool_executor.builtins.calendar_tool import CalendarTool
-from tool_executor.builtins.database_tool import DatabaseTool
 from tool_executor.builtins.communication_tool import CommunicationTool
+from tool_executor.builtins.crm_tool import CRMTool
+from tool_executor.builtins.database_tool import DatabaseTool
 from tool_executor.builtins.webhook_tool import WebhookTool
+from tool_executor.registry import ToolRegistry
 
 
 @pytest.mark.asyncio
@@ -20,7 +22,9 @@ async def test_crm_tool_execution():
 @pytest.mark.asyncio
 async def test_calendar_tool_execution():
     tool = CalendarTool()
-    res = await tool.execute(date="2026-08-01", time="14:00", service="Cardiology", patient_name="John Doe")
+    res = await tool.execute(
+        date="2026-08-01", time="14:00", service="Cardiology", patient_name="John Doe"
+    )
     assert res["status"] == "CONFIRMED"
     assert res["date"] == "2026-08-01"
     assert res["patient_name"] == "John Doe"
@@ -38,7 +42,9 @@ async def test_database_tool_execution():
 @pytest.mark.asyncio
 async def test_communication_tool_execution():
     tool = CommunicationTool()
-    res = await tool.execute(channel="sms", recipient="+15550199", message="Your appointment is confirmed.")
+    res = await tool.execute(
+        channel="sms", recipient="+15550199", message="Your appointment is confirmed."
+    )
     assert res["status"] == "SENT"
     assert res["channel"] == "sms"
     assert "MSG-SMS" in res["message_id"]
@@ -66,7 +72,9 @@ async def test_webhook_tool_get_and_post():
     mock_resp_post.json.return_value = {"created": True}
 
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock, return_value=mock_resp_post):
-        res = await tool.execute(url="https://api.example.com/leads", method="POST", payload={"lead": "123"})
+        res = await tool.execute(
+            url="https://api.example.com/leads", method="POST", payload={"lead": "123"}
+        )
         assert res["status_code"] == 201
 
     # Mock error fallback to simulation

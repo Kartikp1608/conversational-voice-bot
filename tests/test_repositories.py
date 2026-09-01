@@ -1,5 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.repositories import CallRepository, PromptRepository
 
 
@@ -20,6 +21,7 @@ async def test_call_repository_create_and_get_session(db_session: AsyncSession):
     assert created.direction == "outbound"
     assert created.phone_number == "+15550199"
     assert created.status == "connected"
+    assert created.metadata_json is not None
     assert created.metadata_json["campaign"] == "q3_leads"
 
     fetched = await repo.get_session(call_id)
@@ -47,7 +49,9 @@ async def test_call_repository_update_status(db_session: AsyncSession):
         prompt_id="customer_support_inbound",
     )
 
-    updated = await repo.update_status(call_id=call_id, status="active", current_stage="business_logic")
+    updated = await repo.update_status(
+        call_id=call_id, status="active", current_stage="business_logic"
+    )
     assert updated is not None
     assert updated.status == "active"
     assert updated.current_stage == "business_logic"
@@ -121,6 +125,7 @@ async def test_call_repository_log_tool_execution(db_session: AsyncSession):
     assert log.id is not None
     assert log.tool_name == "database_lookup"
     assert log.arguments_json["account_id"] == "ACC-998"
+    assert log.result_json is not None
     assert log.result_json["balance"] == "$5,000.00"
     assert log.error is None
     assert log.execution_time_ms == 45.2
@@ -160,6 +165,7 @@ async def test_call_repository_save_analytics(db_session: AsyncSession):
     assert analytics.total_duration_sec == 145.5
     assert analytics.turn_count == 8
     assert analytics.interruption_count == 2
+    assert analytics.summary is not None
     assert "Enterprise plan" in analytics.summary
 
 

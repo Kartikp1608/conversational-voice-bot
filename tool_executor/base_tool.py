@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Type
+from typing import Any, Dict, Type
+
 from pydantic import BaseModel
 
 
@@ -11,7 +12,7 @@ class BaseTool(ABC):
     args_schema: Type[BaseModel]
 
     @abstractmethod
-    async def execute(self, **kwargs) -> Dict[str, Any]:
+    async def execute(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
         """Async execution handler for tool plugin."""
         pass
 
@@ -25,5 +26,5 @@ class BaseTool(ABC):
                 "type": "OBJECT",
                 "properties": schema.get("properties", {}),
                 "required": schema.get("required", []),
-            }
+            },
         }

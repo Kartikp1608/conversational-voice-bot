@@ -1,10 +1,12 @@
-import json
 import base64
+import json
+from typing import Any, Dict
+
 import httpx
-from typing import Dict, Any, Optional
+
+from logging_config import get_logger
 from telephony.base_telephony import BaseTelephonyAdapter
 from utils.audio_utils import AudioUtils
-from logging_config import get_logger
 
 logger = get_logger("telephony.twilio")
 
@@ -14,9 +16,9 @@ class TwilioAdapter(BaseTelephonyAdapter):
 
     def __init__(
         self,
-        account_sid: Optional[str] = None,
-        auth_token: Optional[str] = None,
-        default_from_number: Optional[str] = None,
+        account_sid: str | None = None,
+        auth_token: str | None = None,
+        default_from_number: str | None = None,
     ):
         self.account_sid = account_sid
         self.auth_token = auth_token
@@ -40,7 +42,7 @@ class TwilioAdapter(BaseTelephonyAdapter):
             }
 
         url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Calls.json"
-        
+
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
         <Response>
             <Connect>
@@ -105,8 +107,10 @@ class TwilioAdapter(BaseTelephonyAdapter):
         """Format 16-bit linear PCM audio chunk into Twilio WebSocket G.711 mu-law JSON payload."""
         mulaw_bytes = AudioUtils.pcm_to_mulaw(pcm_bytes)
         b64_payload = base64.b64encode(mulaw_bytes).decode("utf-8")
-        return json.dumps({
-            "event": "media",
-            "streamSid": stream_sid,
-            "media": {"payload": b64_payload},
-        })
+        return json.dumps(
+            {
+                "event": "media",
+                "streamSid": stream_sid,
+                "media": {"payload": b64_payload},
+            }
+        )

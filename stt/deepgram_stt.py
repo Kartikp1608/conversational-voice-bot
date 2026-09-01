@@ -1,10 +1,12 @@
 import asyncio
 import json
+from typing import Any, Awaitable, Callable
+
 import websockets
-from typing import Callable, Awaitable, Optional
-from stt.base_stt import BaseSTT, STTResult
+
 from config.settings import settings
 from logging_config import get_logger
+from stt.base_stt import BaseSTT, STTResult
 
 logger = get_logger("stt.deepgram")
 
@@ -12,15 +14,15 @@ logger = get_logger("stt.deepgram")
 class DeepgramSTT(BaseSTT):
     """Deepgram Real-Time Streaming Speech-to-Text provider over WebSockets."""
 
-    def __init__(self, api_key: Optional[str] = None, language: str = "en", sample_rate: int = 16000):
+    def __init__(self, api_key: str | None = None, language: str = "en", sample_rate: int = 16000):
         self.api_key = api_key or getattr(settings, "DEEPGRAM_API_KEY", None)
         self.language = language
         self.sample_rate = sample_rate
         self._audio_queue: asyncio.Queue[bytes] = asyncio.Queue()
-        self._callback: Optional[Callable[[STTResult], Awaitable[None]]] = None
+        self._callback: Callable[[STTResult], Awaitable[None]] | None = None
         self._running = False
-        self._ws_task: Optional[asyncio.Task] = None
-        self._ws = None
+        self._ws_task: asyncio.Task | None = None
+        self._ws: Any = None
 
     async def start_stream(self, callback: Callable[[STTResult], Awaitable[None]]) -> None:
         self._callback = callback

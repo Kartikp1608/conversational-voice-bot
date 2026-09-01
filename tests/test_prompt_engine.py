@@ -1,5 +1,5 @@
-from prompt_engine.prompt_loader import PromptLoader
 from prompt_engine.prompt_builder import PromptBuilder
+from prompt_engine.prompt_loader import PromptLoader
 
 
 def test_prompt_loader():

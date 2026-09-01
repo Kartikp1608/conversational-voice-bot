@@ -1,11 +1,11 @@
-from monitoring.tracer import init_tracer, get_tracer
 from monitoring.metrics import (
     ACTIVE_CALLS,
-    TOTAL_CALLS,
     INTERRUPTIONS_COUNT,
-    TOOL_EXECUTIONS,
     LATENCY_END_TO_END,
+    TOOL_EXECUTIONS,
+    TOTAL_CALLS,
 )
+from monitoring.tracer import get_tracer, init_tracer
 
 
 def test_tracer_initialization():

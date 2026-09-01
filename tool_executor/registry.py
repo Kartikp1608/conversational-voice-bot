@@ -1,8 +1,9 @@
 import time
-from typing import Dict, Any, List, Optional
-from tool_executor.base_tool import BaseTool
+from typing import Any, Dict, List
+
 from logging_config import get_logger
 from monitoring.metrics import TOOL_EXECUTIONS
+from tool_executor.base_tool import BaseTool
 
 logger = get_logger("tool_executor.registry")
 
@@ -18,7 +19,7 @@ class ToolRegistry:
         self._tools[tool.name] = tool
         logger.info(f"Registered tool plugin: {tool.name}")
 
-    def get_tool(self, tool_name: str) -> Optional[BaseTool]:
+    def get_tool(self, tool_name: str) -> BaseTool | None:
         return self._tools.get(tool_name)
 
     def get_schemas(self) -> List[Dict[str, Any]]:
@@ -39,7 +40,7 @@ class ToolRegistry:
             validated_args = tool.args_schema(**arguments)
             result = await tool.execute(**validated_args.model_dump())
             elapsed_ms = (time.monotonic() - start_time) * 1000.0
-            
+
             logger.info(
                 f"Successfully executed tool {tool_name}",
                 tool_name=tool_name,
@@ -54,7 +55,9 @@ class ToolRegistry:
 
         except Exception as e:
             elapsed_ms = (time.monotonic() - start_time) * 1000.0
-            logger.error(f"Error executing tool {tool_name}", error=str(e), execution_time_ms=elapsed_ms)
+            logger.error(
+                f"Error executing tool {tool_name}", error=str(e), execution_time_ms=elapsed_ms
+            )
             TOOL_EXECUTIONS.labels(tool_name=tool_name, status="error").inc()
             return {
                 "status": "error",

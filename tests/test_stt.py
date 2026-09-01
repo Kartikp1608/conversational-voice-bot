@@ -1,11 +1,13 @@
-import json
 import asyncio
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from stt.mock_stt import MockSTT
+
+from stt.base_stt import STTResult
 from stt.deepgram_stt import DeepgramSTT
 from stt.google_stt import GoogleSTT
-from stt.base_stt import STTResult
+from stt.mock_stt import MockSTT
 from utils.audio_utils import AudioUtils
 
 
@@ -57,14 +59,14 @@ async def test_deepgram_stt_websocket_mock():
     async def callback(res: STTResult):
         results.append(res)
 
-    mock_msg = json.dumps({
-        "channel": {
-            "alternatives": [
-                {"transcript": "Test Deepgram Streaming", "confidence": 0.98}
-            ]
-        },
-        "is_final": True,
-    })
+    mock_msg = json.dumps(
+        {
+            "channel": {
+                "alternatives": [{"transcript": "Test Deepgram Streaming", "confidence": 0.98}]
+            },
+            "is_final": True,
+        }
+    )
 
     class AsyncWsMock:
         async def __aenter__(self):

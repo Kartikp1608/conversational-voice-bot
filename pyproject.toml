@@ -38,6 +38,9 @@ ignore = [
     "UP035", # Deprecated typing imports
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]
+
 [tool.ruff.lint.isort]
 known-first-party = [
     "api",
@@ -60,12 +63,13 @@ known-first-party = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 warn_return_any = false
 warn_unused_configs = true
 ignore_missing_imports = true
 follow_imports = "silent"
 check_untyped_defs = true
+disable_error_code = ["override"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

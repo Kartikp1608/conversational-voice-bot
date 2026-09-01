@@ -1,8 +1,9 @@
 import asyncio
-from typing import AsyncGenerator, List, Dict, Any, Optional
+from typing import Any, AsyncGenerator, Dict, List
+
 from llm.base_llm import BaseLLM, LLMResponseChunk
-from utils.async_helpers import CancellationToken
 from logging_config import get_logger
+from utils.async_helpers import CancellationToken
 
 logger = get_logger("llm.mock")
 
@@ -12,10 +13,10 @@ class MockLLM(BaseLLM):
 
     def __init__(
         self,
-        response_text: Optional[str] = None,
-        trigger_tool: Optional[str] = None,
-        tool_args: Optional[Dict[str, Any]] = None,
-        model: Optional[str] = None,
+        response_text: str | None = None,
+        trigger_tool: str | None = None,
+        tool_args: Dict[str, Any] | None = None,
+        model: str | None = None,
     ):
         self.response_text = response_text
         self.trigger_tool = trigger_tool
@@ -26,16 +27,25 @@ class MockLLM(BaseLLM):
         self,
         system_prompt: str,
         messages: List[Dict[str, Any]],
-        tools_schema: Optional[List[Dict[str, Any]]] = None,
-        cancellation_token: Optional[CancellationToken] = None,
+        tools_schema: List[Dict[str, Any]] | None = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> AsyncGenerator[LLMResponseChunk, None]:
-        
+
         # Check if last user message asks for a tool execution trigger
         last_msg = (messages[-1].get("content", "") if messages else "").lower()
 
-        if self.trigger_tool or "book" in last_msg or "calendar" in last_msg or "schedule" in last_msg:
+        if (
+            self.trigger_tool
+            or "book" in last_msg
+            or "calendar" in last_msg
+            or "schedule" in last_msg
+        ):
             tool_name = self.trigger_tool or "book_appointment"
-            tool_params = self.tool_args or {"date": "2026-07-29", "time": "10:00 AM", "service": "General Consultation"}
+            tool_params = self.tool_args or {
+                "date": "2026-07-29",
+                "time": "10:00 AM",
+                "service": "General Consultation",
+            }
             yield LLMResponseChunk(tool_call_name=tool_name, tool_call_args=tool_params)
             yield LLMResponseChunk(is_finished=True)
             return

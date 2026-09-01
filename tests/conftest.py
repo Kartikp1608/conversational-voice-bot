@@ -1,9 +1,9 @@
 import os
-import pytest
-import pytest_asyncio
 from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Force mock mode and in-memory database before any other imports
 os.environ["LLM_PROVIDER"] = "mock"
@@ -13,15 +13,16 @@ os.environ["APP_ENV"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
 from config.settings import settings
+
 settings.LLM_PROVIDER = "mock"
 settings.STT_PROVIDER = "mock"
 settings.TTS_PROVIDER = "mock"
 settings.APP_ENV = "testing"
 settings.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-from database.models import Base
-from database.db import get_db_session, init_db
 from api.main import app
+from database.db import get_db_session, init_db
+from database.models import Base
 
 # Test In-Memory Database Engine
 test_engine = create_async_engine(
@@ -75,4 +76,3 @@ async def async_client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, 
         yield client
 
     app.dependency_overrides.clear()
-

@@ -1,9 +1,8 @@
 import json
-from typing import Dict, Any
-from telephony.base_telephony import BaseTelephonyAdapter
-
+from typing import Any, Dict
 
 from logging_config import get_logger
+from telephony.base_telephony import BaseTelephonyAdapter
 
 logger = get_logger("telephony.sip")
 

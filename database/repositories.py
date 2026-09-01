@@ -1,8 +1,16 @@
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.models import CallSession, TranscriptSegment, CallAnalytics, ToolExecutionLog, PromptTemplate
+
+from database.models import (
+    CallAnalytics,
+    CallSession,
+    PromptTemplate,
+    ToolExecutionLog,
+    TranscriptSegment,
+)
 
 
 def utc_now() -> datetime:
@@ -21,7 +29,7 @@ class CallRepository:
         direction: str,
         phone_number: str,
         prompt_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Dict[str, Any] | None = None,
     ) -> CallSession:
         call_session = CallSession(
             call_id=call_id,
@@ -37,7 +45,9 @@ class CallRepository:
         await self.session.refresh(call_session)
         return call_session
 
-    async def update_status(self, call_id: str, status: str, current_stage: Optional[str] = None) -> Optional[CallSession]:
+    async def update_status(
+        self, call_id: str, status: str, current_stage: str | None = None
+    ) -> CallSession | None:
         stmt = select(CallSession).where(CallSession.call_id == call_id)
         res = await self.session.execute(stmt)
         call_session = res.scalar_one_or_none()
@@ -51,7 +61,7 @@ class CallRepository:
             await self.session.refresh(call_session)
         return call_session
 
-    async def get_session(self, call_id: str) -> Optional[CallSession]:
+    async def get_session(self, call_id: str) -> CallSession | None:
         stmt = select(CallSession).where(CallSession.call_id == call_id)
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()
@@ -61,8 +71,8 @@ class CallRepository:
         call_id: str,
         speaker: str,
         text: str,
-        latency_ms: Optional[float] = None,
-        stage: Optional[str] = None,
+        latency_ms: float | None = None,
+        stage: str | None = None,
     ) -> TranscriptSegment:
         segment = TranscriptSegment(
             call_id=call_id,
@@ -81,8 +91,8 @@ class CallRepository:
         call_id: str,
         tool_name: str,
         arguments: Dict[str, Any],
-        result: Optional[Dict[str, Any]] = None,
-        error: Optional[str] = None,
+        result: Dict[str, Any] | None = None,
+        error: str | None = None,
         execution_time_ms: float = 0.0,
     ) -> ToolExecutionLog:
         log = ToolExecutionLog(
@@ -105,7 +115,7 @@ class CallRepository:
         avg_latency_ms: float,
         turn_count: int,
         interruption_count: int,
-        summary: Optional[str] = None,
+        summary: str | None = None,
     ) -> CallAnalytics:
         analytics = CallAnalytics(
             call_id=call_id,
@@ -126,7 +136,9 @@ class PromptRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def save_prompt(self, prompt_id: str, name: str, content_yaml: str, description: Optional[str] = None) -> PromptTemplate:
+    async def save_prompt(
+        self, prompt_id: str, name: str, content_yaml: str, description: str | None = None
+    ) -> PromptTemplate:
         stmt = select(PromptTemplate).where(PromptTemplate.id == prompt_id)
         res = await self.session.execute(stmt)
         existing = res.scalar_one_or_none()
@@ -149,7 +161,7 @@ class PromptRepository:
             await self.session.commit()
             return tmpl
 
-    async def get_prompt(self, prompt_id: str) -> Optional[PromptTemplate]:
+    async def get_prompt(self, prompt_id: str) -> PromptTemplate | None:
         stmt = select(PromptTemplate).where(PromptTemplate.id == prompt_id)
         res = await self.session.execute(stmt)
         return res.scalar_one_or_none()

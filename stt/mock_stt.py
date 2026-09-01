@@ -1,8 +1,8 @@
-import asyncio
 import time
-from typing import Callable, Awaitable, Optional
-from stt.base_stt import BaseSTT, STTResult
+from typing import Awaitable, Callable
+
 from logging_config import get_logger
+from stt.base_stt import BaseSTT, STTResult
 
 logger = get_logger("stt.mock")
 
@@ -12,7 +12,7 @@ class MockSTT(BaseSTT):
 
     def __init__(self, simulated_text: str = "Hello, I want to book an appointment for tomorrow."):
         self.simulated_text = simulated_text
-        self._callback: Optional[Callable[[STTResult], Awaitable[None]]] = None
+        self._callback: Callable[[STTResult], Awaitable[None]] | None = None
         self._running = False
         self.audio_bytes_received = 0
         self.last_emitted_time = 0.0
@@ -35,12 +35,18 @@ class MockSTT(BaseSTT):
         if self.audio_bytes_received >= 16000 and (now - self.last_emitted_time) > 10.0:
             self.last_emitted_time = now
             if self._callback:
-                await self._callback(STTResult(text=self.simulated_text, is_final=True, confidence=0.99, latency_ms=20.0))
+                await self._callback(
+                    STTResult(
+                        text=self.simulated_text, is_final=True, confidence=0.99, latency_ms=20.0
+                    )
+                )
 
     async def inject_transcript(self, text: str, is_final: bool = True) -> None:
         """Manual injection helper for integration tests."""
         if self._callback:
-            await self._callback(STTResult(text=text, is_final=is_final, confidence=0.99, latency_ms=10.0))
+            await self._callback(
+                STTResult(text=text, is_final=is_final, confidence=0.99, latency_ms=10.0)
+            )
 
     async def close(self) -> None:
         self._running = False

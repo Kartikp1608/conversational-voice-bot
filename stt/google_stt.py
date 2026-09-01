@@ -1,8 +1,9 @@
 import asyncio
 import time
-from typing import Callable, Awaitable, Optional
-from stt.base_stt import BaseSTT, STTResult
+from typing import Awaitable, Callable
+
 from logging_config import get_logger
+from stt.base_stt import BaseSTT, STTResult
 
 logger = get_logger("stt.google")
 
@@ -14,9 +15,9 @@ class GoogleSTT(BaseSTT):
         self.language_code = language_code
         self.sample_rate = sample_rate
         self._audio_queue: asyncio.Queue[bytes] = asyncio.Queue()
-        self._callback: Optional[Callable[[STTResult], Awaitable[None]]] = None
+        self._callback: Callable[[STTResult], Awaitable[None]] | None = None
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def start_stream(self, callback: Callable[[STTResult], Awaitable[None]]) -> None:
         self._callback = callback
@@ -32,6 +33,7 @@ class GoogleSTT(BaseSTT):
         """Streaming request generator feeding Google Speech API."""
         try:
             from google.cloud import speech
+
             client = speech.SpeechAsyncClient()
             config = speech.RecognitionConfig(
                 encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,

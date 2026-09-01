@@ -1,34 +1,33 @@
 import asyncio
 import time
-from typing import Callable, Awaitable, Optional, Dict, Any, AsyncGenerator
+from typing import AsyncGenerator, Awaitable, Callable
 
+from analytics.call_analytics import CallAnalyticsTracker
 from config.settings import settings
-from vad.vad_engine import VADEngine, VADState
-from noise_filter.audio_filter import AudioFilter
-from stt.base_stt import BaseSTT, STTResult
-from stt.google_stt import GoogleSTT
-from stt.deepgram_stt import DeepgramSTT
-from stt.mock_stt import MockSTT
-from llm.base_llm import BaseLLM, LLMResponseChunk
-from llm.gemini_live import GeminiLiveLLM
-from llm.mock_llm import MockLLM
-from tts.base_tts import BaseTTS
-from tts.google_tts import GoogleTTS
-from tts.deepgram_tts import DeepgramTTS
-from tts.mock_tts import MockTTS
 from conversation.conversation_manager import ConversationManager
 from conversation.turn_aggregator import TurnAggregator
 from interruptions.interrupt_manager import InterruptManager
-from tool_executor.registry import ToolRegistry
-from tool_executor.builtins.crm_tool import CRMTool
-from tool_executor.builtins.calendar_tool import CalendarTool
-from tool_executor.builtins.database_tool import DatabaseTool
-from tool_executor.builtins.communication_tool import CommunicationTool
-from tool_executor.builtins.webhook_tool import WebhookTool
-from analytics.call_analytics import CallAnalyticsTracker
-from utils.async_helpers import BoundedAudioQueue, CancellationToken
-from utils.audio_utils import AudioUtils
+from llm.base_llm import BaseLLM
+from llm.gemini_live import GeminiLiveLLM
+from llm.mock_llm import MockLLM
 from logging_config import get_logger
+from noise_filter.audio_filter import AudioFilter
+from stt.base_stt import BaseSTT, STTResult
+from stt.deepgram_stt import DeepgramSTT
+from stt.google_stt import GoogleSTT
+from stt.mock_stt import MockSTT
+from tool_executor.builtins.calendar_tool import CalendarTool
+from tool_executor.builtins.communication_tool import CommunicationTool
+from tool_executor.builtins.crm_tool import CRMTool
+from tool_executor.builtins.database_tool import DatabaseTool
+from tool_executor.builtins.webhook_tool import WebhookTool
+from tool_executor.registry import ToolRegistry
+from tts.base_tts import BaseTTS
+from tts.deepgram_tts import DeepgramTTS
+from tts.google_tts import GoogleTTS
+from tts.mock_tts import MockTTS
+from utils.async_helpers import BoundedAudioQueue
+from vad.vad_engine import VADEngine, VADState
 
 logger = get_logger("voice_gateway.pipeline")
 
@@ -85,21 +84,25 @@ class AudioPipeline:
 
         # Select TTS Provider
         if settings.TTS_PROVIDER == "deepgram":
-            self.tts: BaseTTS = DeepgramTTS(api_key=settings.DEEPGRAM_API_KEY, model=settings.TTS_VOICE_NAME)
+            self.tts: BaseTTS = DeepgramTTS(
+                api_key=settings.DEEPGRAM_API_KEY, model=settings.TTS_VOICE_NAME
+            )
         elif settings.TTS_PROVIDER == "google":
             self.tts = GoogleTTS(voice_name=settings.TTS_VOICE_NAME)
         else:
             self.tts = MockTTS()
 
         self.outbound_audio_queue = BoundedAudioQueue(maxsize=200)
-        self.turn_start_time: Optional[float] = None
+        self.turn_start_time: float | None = None
         self._is_running = False
 
     async def start(self, audio_output_callback: Callable[[bytes], Awaitable[None]]) -> None:
         """Start streaming STT and output audio consumer loops."""
         self._is_running = True
         await self.stt.start_stream(self._on_stt_result)
-        self._consumer_task = asyncio.create_task(self._consume_outbound_audio(audio_output_callback))
+        self._consumer_task = asyncio.create_task(
+            self._consume_outbound_audio(audio_output_callback)
+        )
         logger.info(f"AudioPipeline started for call {self.call_id}", session_id=self.session_id)
 
         # Trigger Initial Bot Greeting on Call Connect
@@ -110,9 +113,13 @@ class AudioPipeline:
         await asyncio.sleep(0.1)
         greeting_text = "Hello! Welcome to our service. How can I assist you today?"
         if self.prompt_id == "healthcare_appointment":
-            greeting_text = "Hello! Welcome to Apex Health Clinic. How can I assist you with scheduling today?"
+            greeting_text = (
+                "Hello! Welcome to Apex Health Clinic. How can I assist you with scheduling today?"
+            )
         elif self.prompt_id == "sales_outbound":
-            greeting_text = "Hello! This is CloudScale AI calling. Do you have two minutes to speak today?"
+            greeting_text = (
+                "Hello! This is CloudScale AI calling. Do you have two minutes to speak today?"
+            )
         elif self.prompt_id == "customer_support_inbound":
             greeting_text = "Welcome to Nexus Telecom Support. How can I help you today?"
         elif self.prompt_id == "banking_verification":
@@ -171,7 +178,9 @@ class AudioPipeline:
         """Full Low Latency Pipeline: Aggregated Utterance -> Conversation Manager -> LLM -> Tool -> TTS -> Audio Queue."""
         token = self.interrupt_manager.create_token()
 
-        logger.info(f"User Aggregated Utterance: '{aggregated_user_text}'", user_text=aggregated_user_text)
+        logger.info(
+            f"User Aggregated Utterance: '{aggregated_user_text}'", user_text=aggregated_user_text
+        )
 
         # 1. Update Conversation Manager & System Prompt
         system_prompt = self.conversation.process_user_turn(aggregated_user_text)
@@ -196,8 +205,13 @@ class AudioPipeline:
                     return
 
                 if chunk.tool_call_name:
-                    logger.info(f"LLM requested tool call: {chunk.tool_call_name}", tool=chunk.tool_call_name)
-                    tool_res = await self.tool_registry.execute_tool(chunk.tool_call_name, chunk.tool_call_args or {})
+                    logger.info(
+                        f"LLM requested tool call: {chunk.tool_call_name}",
+                        tool=chunk.tool_call_name,
+                    )
+                    tool_res = await self.tool_registry.execute_tool(
+                        chunk.tool_call_name, chunk.tool_call_args or {}
+                    )
                     tool_msg = f"Tool result for {chunk.tool_call_name}: {tool_res.get('result')}"
                     self.conversation.record_assistant_turn(tool_msg)
                     res_text = f"I've executed {chunk.tool_call_name}. Everything is confirmed."
@@ -218,7 +232,9 @@ class AudioPipeline:
         tts_start_time = time.monotonic()
         first_audio_byte_sent = False
 
-        async for audio_chunk in self.tts.synthesize_stream(text_stream_generator(), cancellation_token=token):
+        async for audio_chunk in self.tts.synthesize_stream(
+            text_stream_generator(), cancellation_token=token
+        ):
             if token.is_cancelled:
                 break
 
@@ -252,9 +268,17 @@ class AudioPipeline:
     async def stop(self) -> None:
         """Clean pipeline shutdown."""
         self._is_running = False
-        if hasattr(self, "_consumer_task") and self._consumer_task and not self._consumer_task.done():
+        if (
+            hasattr(self, "_consumer_task")
+            and self._consumer_task
+            and not self._consumer_task.done()
+        ):
             self._consumer_task.cancel()
-        if hasattr(self, "_greeting_task") and self._greeting_task and not self._greeting_task.done():
+        if (
+            hasattr(self, "_greeting_task")
+            and self._greeting_task
+            and not self._greeting_task.done()
+        ):
             self._greeting_task.cancel()
         await self.stt.close()
         logger.info(f"AudioPipeline stopped for session {self.session_id}")

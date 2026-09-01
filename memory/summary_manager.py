@@ -1,4 +1,5 @@
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from logging_config import get_logger
 
 logger = get_logger("memory.summary")
@@ -18,7 +19,7 @@ class SummaryManager:
         user_texts = [m["content"] for m in messages if m.get("role") == "user"]
         assistant_texts = [m["content"] for m in messages if m.get("role") == "assistant"]
 
-        brief = f"User inquired about {', '.join(user_texts[:3])}. Assistant provided response."
+        brief = f"User inquired about {', '.join(user_texts[:3])}. Assistant provided {len(assistant_texts)} response turns."
         self.summary = brief
         logger.info("Generated compressed conversation summary", summary=self.summary)
         return self.summary

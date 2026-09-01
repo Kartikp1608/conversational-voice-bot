@@ -1,11 +1,12 @@
 import asyncio
+from typing import AsyncGenerator
+
 import httpx
-from typing import AsyncGenerator, Optional
-from tts.base_tts import BaseTTS
-from utils.async_helpers import CancellationToken
-from utils.audio_utils import AudioUtils
+
 from config.settings import settings
 from logging_config import get_logger
+from tts.base_tts import BaseTTS
+from utils.async_helpers import CancellationToken
 
 logger = get_logger("tts.deepgram")
 
@@ -13,14 +14,14 @@ logger = get_logger("tts.deepgram")
 class DeepgramTTS(BaseTTS):
     """Deepgram Aura Streaming Text-To-Speech provider."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "aura-asteria-en"):
+    def __init__(self, api_key: str | None = None, model: str = "aura-asteria-en"):
         self.api_key = api_key or getattr(settings, "DEEPGRAM_API_KEY", None)
         self.model = model
 
     async def synthesize_stream(
         self,
         text_stream: AsyncGenerator[str, None],
-        cancellation_token: Optional[CancellationToken] = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> AsyncGenerator[bytes, None]:
         full_text = ""
         async for token in text_stream:
@@ -49,7 +50,9 @@ class DeepgramTTS(BaseTTS):
                 async with client.stream("POST", url, headers=headers, json=payload) as response:
                     if response.status_code != 200:
                         err_body = await response.aread()
-                        logger.error(f"Deepgram TTS API error {response.status_code}: {err_body.decode('utf-8', errors='ignore')}")
+                        logger.error(
+                            f"Deepgram TTS API error {response.status_code}: {err_body.decode('utf-8', errors='ignore')}"
+                        )
                         return
 
                     async for chunk in response.aiter_bytes(chunk_size=640):

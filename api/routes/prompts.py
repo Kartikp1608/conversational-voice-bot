@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from database.db import get_db_session
 from database.repositories import PromptRepository
 from prompt_engine.prompt_loader import PromptLoader
@@ -16,7 +17,9 @@ class PromptCreateRequest(BaseModel):
 
 
 @router.post("/", status_code=201)
-async def create_or_update_prompt(req: PromptCreateRequest, db: AsyncSession = Depends(get_db_session)):
+async def create_or_update_prompt(
+    req: PromptCreateRequest, db: AsyncSession = Depends(get_db_session)
+):
     """Upload or update dynamic business YAML system prompt."""
     repo = PromptRepository(db)
     tmpl = await repo.save_prompt(

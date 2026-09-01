@@ -1,6 +1,8 @@
 import os
+from typing import Any, Dict
+
 import yaml
-from typing import Dict, Any, Optional
+
 from logging_config import get_logger
 
 logger = get_logger("prompt_loader")
@@ -27,7 +29,7 @@ class PromptLoader:
             return self._get_fallback_prompt(prompt_id)
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 self._cache[prompt_id] = data
                 return data
@@ -45,15 +47,15 @@ class PromptLoader:
                 "Keep responses under 25 words for conversational voice pacing.",
                 "Speak naturally with human conversational pauses.",
                 "If the user interrupts, stop speaking immediately.",
-                "Confirm key details before taking actions."
+                "Confirm key details before taking actions.",
             ],
             "workflow": {
                 "GREETING": "Greet the user warmly and introduce yourself.",
                 "BUSINESS_LOGIC": "Understand user's intent and assist them.",
-                "CLOSING": "Thank the user and end the call politely."
+                "CLOSING": "Thank the user and end the call politely.",
             },
             "fallbacks": [
                 "I'm sorry, I didn't quite catch that. Could you please repeat?",
-                "Could you clarify your request for me?"
-            ]
+                "Could you clarify your request for me?",
+            ],
         }

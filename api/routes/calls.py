@@ -1,13 +1,15 @@
 import uuid
-from typing import Optional, Dict, Any
+from typing import Any, Dict
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from config.settings import settings
 from database.db import get_db_session
 from database.repositories import CallRepository
-from telephony.twilio_adapter import TwilioAdapter
-from config.settings import settings
 from logging_config import get_logger
+from telephony.twilio_adapter import TwilioAdapter
 
 logger = get_logger("api.calls")
 
@@ -16,9 +18,11 @@ router = APIRouter(prefix="/calls", tags=["Calls"])
 
 class OutboundCallRequest(BaseModel):
     to_phone_number: str = Field(..., description="Target phone number in E.164 format (+15550199)")
-    from_phone_number: Optional[str] = Field(None, description="Origin phone number")
+    from_phone_number: str | None = Field(None, description="Origin phone number")
     prompt_id: str = Field("sales_outbound", description="ID of business prompt configuration file")
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Custom call metadata")
+    metadata: Dict[str, Any] | None = Field(
+        default_factory=dict, description="Custom call metadata"
+    )
 
 
 class OutboundCallResponse(BaseModel):

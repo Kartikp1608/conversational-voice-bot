@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
 from config.settings import settings
 
 router = APIRouter(tags=["Health & Metrics"])
@@ -17,7 +18,7 @@ async def health_check():
             "llm": settings.LLM_PROVIDER,
             "stt": settings.STT_PROVIDER,
             "tts": settings.TTS_PROVIDER,
-        }
+        },
     }
 
 

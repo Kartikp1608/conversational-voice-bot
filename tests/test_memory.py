@@ -1,6 +1,7 @@
 import pytest
-from memory.short_term_memory import ShortTermMemory
+
 from memory.knowledge_base import KnowledgeBase
+from memory.short_term_memory import ShortTermMemory
 from memory.summary_manager import SummaryManager
 
 
@@ -39,8 +40,13 @@ def test_knowledge_base_search():
     assert kb.search("") == []
     assert kb.search("anything") == []
 
-    kb.add_document("doc1", "Apex Health Clinic offers cardiology, dermatology, and general consultation services.")
-    kb.add_document("doc2", "Vantage Bank offers checking accounts, mortgages, and fraud monitoring.")
+    kb.add_document(
+        "doc1",
+        "Apex Health Clinic offers cardiology, dermatology, and general consultation services.",
+    )
+    kb.add_document(
+        "doc2", "Vantage Bank offers checking accounts, mortgages, and fraud monitoring."
+    )
     kb.add_document("doc3", "Nexus Telecom provides high-speed fiber internet and mobile plans.")
 
     res = kb.search("cardiology dermatology", top_k=1)

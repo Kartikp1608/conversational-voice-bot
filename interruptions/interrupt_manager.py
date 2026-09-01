@@ -1,8 +1,8 @@
 import asyncio
-from typing import Optional
-from utils.async_helpers import CancellationToken, BoundedAudioQueue
+
 from logging_config import get_logger
 from monitoring.metrics import INTERRUPTIONS_COUNT
+from utils.async_helpers import BoundedAudioQueue, CancellationToken
 
 logger = get_logger("interruptions.manager")
 
@@ -14,16 +14,16 @@ class InterruptManager:
 
     def __init__(self, session_id: str):
         self.session_id = session_id
-        self.current_token: Optional[CancellationToken] = None
-        self.current_llm_task: Optional[asyncio.Task] = None
-        self.current_tts_task: Optional[asyncio.Task] = None
+        self.current_token: CancellationToken | None = None
+        self.current_llm_task: asyncio.Task | None = None
+        self.current_tts_task: asyncio.Task | None = None
 
     def create_token(self) -> CancellationToken:
         """Create new active turn cancellation token."""
         self.current_token = CancellationToken()
         return self.current_token
 
-    def trigger_interruption(self, audio_queue: Optional[BoundedAudioQueue] = None) -> int:
+    def trigger_interruption(self, audio_queue: BoundedAudioQueue | None = None) -> int:
         """Execute barge-in cut-off sequence immediately on user speech detection.
         Returns count of dropped audio frames flushed from buffer.
         """

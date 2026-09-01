@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List
 
 
 class ShortTermMemory:
@@ -8,7 +8,7 @@ class ShortTermMemory:
         self.max_turns = max_turns
         self.messages: List[Dict[str, Any]] = []
         self.entities: Dict[str, Any] = {}
-        self.intent: Optional[str] = None
+        self.intent: str | None = None
         self.pending_questions: List[str] = []
 
     def add_user_message(self, text: str) -> None:
@@ -22,12 +22,12 @@ class ShortTermMemory:
     def set_entity(self, key: str, value: Any) -> None:
         self.entities[key] = value
 
-    def get_entity(self, key: str) -> Optional[Any]:
+    def get_entity(self, key: str) -> Any | None:
         return self.entities.get(key)
 
     def _trim(self) -> None:
         if len(self.messages) > self.max_turns * 2:
-            self.messages = self.messages[-(self.max_turns * 2):]
+            self.messages = self.messages[-(self.max_turns * 2) :]
 
     def get_messages(self) -> List[Dict[str, Any]]:
         return list(self.messages)

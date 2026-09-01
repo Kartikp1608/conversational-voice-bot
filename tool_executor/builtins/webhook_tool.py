@@ -1,10 +1,10 @@
-import httpx
-from typing import Dict, Any, Optional
-from pydantic import BaseModel, Field
-from tool_executor.base_tool import BaseTool
+from typing import Any, Dict
 
+import httpx
+from pydantic import BaseModel, Field
 
 from logging_config import get_logger
+from tool_executor.base_tool import BaseTool
 
 logger = get_logger("tool_executor.webhook")
 
@@ -20,7 +20,9 @@ class WebhookTool(BaseTool):
     description = "Trigger external REST HTTP webhook endpoint for custom business integrations."
     args_schema = WebhookArgs
 
-    async def execute(self, url: str, method: str = "POST", payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def execute(
+        self, url: str, method: str = "POST", payload: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         payload = payload or {}
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
@@ -30,8 +32,19 @@ class WebhookTool(BaseTool):
                     resp = await client.post(url, json=payload)
                 return {
                     "status_code": resp.status_code,
-                    "response": resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text,
+                    "response": (
+                        resp.json()
+                        if resp.headers.get("content-type", "").startswith("application/json")
+                        else resp.text
+                    ),
                 }
         except Exception as e:
-            logger.warning("Webhook HTTP call failed, falling back to simulation", error=str(e), url=url)
-            return {"status": "simulated", "url": url, "payload": payload, "message": "Simulated successful webhook execution."}
+            logger.warning(
+                "Webhook HTTP call failed, falling back to simulation", error=str(e), url=url
+            )
+            return {
+                "status": "simulated",
+                "url": url,
+                "payload": payload,
+                "message": "Simulated successful webhook execution.",
+            }

@@ -1,7 +1,13 @@
 import time
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List
+
 from logging_config import get_logger
-from monitoring.metrics import LATENCY_END_TO_END, LATENCY_STT, LATENCY_LLM_TTFT, LATENCY_TTS_FIRST_BYTE
+from monitoring.metrics import (
+    LATENCY_END_TO_END,
+    LATENCY_LLM_TTFT,
+    LATENCY_STT,
+    LATENCY_TTS_FIRST_BYTE,
+)
 
 logger = get_logger("analytics")
 
@@ -46,8 +52,10 @@ class CallAnalyticsTracker:
 
     def get_summary(self) -> Dict[str, Any]:
         duration_sec = time.monotonic() - self.start_time
-        avg_latency = (sum(self.turn_latencies) / len(self.turn_latencies)) if self.turn_latencies else 0.0
-        
+        avg_latency = (
+            (sum(self.turn_latencies) / len(self.turn_latencies)) if self.turn_latencies else 0.0
+        )
+
         sorted_latencies = sorted(self.turn_latencies)
         p95_index = int(len(sorted_latencies) * 0.95) if sorted_latencies else 0
         p95_latency = sorted_latencies[p95_index] if sorted_latencies else 0.0

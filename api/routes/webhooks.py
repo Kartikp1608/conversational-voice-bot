@@ -1,6 +1,7 @@
 import uuid
-from fastapi import APIRouter, Response, Request
-from config.settings import settings
+
+from fastapi import APIRouter, Request, Response
+
 from logging_config import get_logger
 
 logger = get_logger("api.webhooks")
@@ -37,5 +38,9 @@ async def twilio_status_callback(request: Request):
     except Exception as e:
         logger.warning("Failed to parse Twilio status callback form data", error=str(e))
         call_sid, call_status = None, None
-    logger.info(f"Twilio Call {call_sid} status update: {call_status}", call_sid=call_sid, status=call_status)
+    logger.info(
+        f"Twilio Call {call_sid} status update: {call_status}",
+        call_sid=call_sid,
+        status=call_status,
+    )
     return {"status": "ok"}

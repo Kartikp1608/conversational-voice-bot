@@ -1,9 +1,10 @@
-import asyncio
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from tts.mock_tts import MockTTS
+
 from tts.deepgram_tts import DeepgramTTS
 from tts.google_tts import GoogleTTS
+from tts.mock_tts import MockTTS
 from utils.async_helpers import CancellationToken
 from utils.audio_utils import AudioUtils
 
@@ -17,7 +18,9 @@ async def sample_text_generator(text="Hello world"):
 async def test_mock_tts_synthesis():
     tts = MockTTS()
     chunks = []
-    async for chunk in tts.synthesize_stream(sample_text_generator("Welcome to our voice assistant")):
+    async for chunk in tts.synthesize_stream(
+        sample_text_generator("Welcome to our voice assistant")
+    ):
         chunks.append(chunk)
 
     assert len(chunks) > 0
@@ -64,7 +67,7 @@ async def test_deepgram_tts_streaming_mock():
 
         async def aiter_bytes(self, chunk_size=640):
             for i in range(0, len(mock_audio), chunk_size):
-                yield mock_audio[i:i + chunk_size]
+                yield mock_audio[i : i + chunk_size]
 
     class MockClient:
         async def __aenter__(self):
@@ -87,13 +90,16 @@ async def test_deepgram_tts_streaming_mock():
 @pytest.mark.asyncio
 async def test_google_tts_streaming_fallback():
     tts = GoogleTTS(voice_name="en-US-Neural2-F")
-    # Will fail import/credentials and fall back to synthetic PCM silence
-    chunks = []
-    async for chunk in tts.synthesize_stream(sample_text_generator("Testing Google TTS")):
-        chunks.append(chunk)
+    # Patch to trigger fallback immediately without network timeout
+    with patch(
+        "google.cloud.texttospeech.TextToSpeechAsyncClient", side_effect=Exception("API offline")
+    ):
+        chunks = []
+        async for chunk in tts.synthesize_stream(sample_text_generator("Testing Google TTS")):
+            chunks.append(chunk)
 
-    assert len(chunks) > 0
-    assert isinstance(chunks[0], bytes)
+        assert len(chunks) > 0
+        assert isinstance(chunks[0], bytes)
 
 
 @pytest.mark.asyncio
