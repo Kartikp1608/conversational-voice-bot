@@ -1,6 +1,12 @@
 # Production Real-Time Conversational Voice AI Platform
 
-A high-performance, low-latency, full-duplex conversational Voice AI engine built with **Python 3.12**, **FastAPI**, **WebSockets**, **Gemini 2.5 Flash Live API**, **Google Streaming Speech-to-Text**, and **Google Cloud Text-to-Speech**.
+[![CI](https://github.com/Kartikp1608/conversational-voice-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Kartikp1608/conversational-voice-bot/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://github.com/Kartikp1608/conversational-voice-bot)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Linting: ruff](https://img.shields.io/badge/lint-ruff-orange.svg)](https://github.com/astral-sh/ruff)
+[![Type Checked: mypy](https://img.shields.io/badge/type_checker-mypy-blue.svg)](http://mypy-lang.org/)
+
+A high-performance, low-latency, full-duplex conversational Voice AI engine built with **Python 3.10+ / 3.12 / 3.13**, **FastAPI**, **WebSockets**, **Gemini 2.5 Flash Live API**, **Deepgram Streaming STT / TTS**, and **Google Cloud Speech / Text-to-Speech**.
 
 Engineered to match enterprise platforms like **ElevenLabs Conversational AI**, **Retell AI**, **Bland AI**, and **Vapi**, achieving sub-800ms end-to-end response latency with real-time barge-in interruption handling, dynamic state machines, pluggable tool calling, and prompt-driven business logic.
 
@@ -15,6 +21,7 @@ Engineered to match enterprise platforms like **ElevenLabs Conversational AI**, 
 * **Explicit State Machine**: Formally managed conversation state transitions (`GREETING` -> `VERIFICATION` -> `BUSINESS_LOGIC` -> `TOOL_EXECUTION` -> `CONFIRMATION` -> `CLOSING`).
 * **Pluggable Tool Execution**: Asynchronous plugin engine supporting CRM lookups, Calendar scheduling, Database queries, SMS/Email/WhatsApp messaging, and REST Webhooks.
 * **Enterprise Telemetry**: Integrated Prometheus metric exposition, structured JSON logging with context-propagated call IDs, and OpenTelemetry distributed tracing.
+* **Reproducible & Offline Testable**: 100% runnable test suite with mock providers and in-memory SQLite requiring zero external API keys.
 
 ---
 
@@ -106,10 +113,92 @@ sequenceDiagram
 
 ---
 
+## 🏁 Quickstart & Installation
+
+### 1. Clone Repository & Setup Virtual Environment
+```bash
+git clone https://github.com/Kartikp1608/conversational-voice-bot.git
+cd conversational-voice-bot
+
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 2. Install Dependencies
+Install exact pinned dependencies or development tools:
+```bash
+# Production install with locked versions:
+pip install -r requirements-lock.txt
+
+# Or development install:
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+### 3. Configure Environment Variables
+Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+To run completely offline with mock providers (no API keys needed), leave `LLM_PROVIDER=mock`, `STT_PROVIDER=mock`, and `TTS_PROVIDER=mock`.
+
+---
+
+## 🛠 Configuration Guide
+
+All environment variables supported in `.env`:
+
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `APP_NAME` | String | `VoiceAI Platform` | Service title |
+| `APP_ENV` | String | `development` | Environment (`development`, `production`, `testing`) |
+| `DEBUG` | Boolean | `true` | FastAPI reload mode |
+| `PORT` | Integer | `8000` | HTTP/WebSocket listening port |
+| `HOST` | String | `0.0.0.0` | Bind host address |
+| `TARGET_MAX_LATENCY_MS` | Float | `800.0` | End-to-end latency SLA target |
+| `LLM_PROVIDER` | String | `mock` | `mock` or `gemini_live` |
+| `STT_PROVIDER` | String | `mock` | `mock`, `deepgram`, or `google` |
+| `TTS_PROVIDER` | String | `mock` | `mock`, `deepgram`, or `google` |
+| `GEMINI_API_KEY` | String | Optional | Google Gemini API Key |
+| `VERTEX_PROJECT_ID` | String | `ml-odio` | GCP Project ID |
+| `DEEPGRAM_API_KEY` | String | Optional | Deepgram API Key for STT/TTS |
+| `DATABASE_URL` | String | `sqlite+aiosqlite:///./voice_ai.db` | Async database URI |
+| `TWILIO_ACCOUNT_SID` | String | Optional | Twilio account SID for telephony |
+| `TWILIO_AUTH_TOKEN` | String | Optional | Twilio authentication token |
+| `TWILIO_PHONE_NUMBER` | String | `+18005550199` | Caller ID phone number |
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+The codebase includes an extensive unit and integration test suite with coverage enforcement (>84% coverage across all modules).
+
+### Run Test Suite with Coverage
+```bash
+pytest -v --cov=. --cov-report=term-missing
+```
+
+### Run Code Formatter & Linters
+```bash
+# Check formatting with Black
+black --check .
+
+# Lint with Ruff
+ruff check .
+
+# Type checking with Mypy
+mypy .
+```
+
+---
+
 ## 📁 Repository Structure
 
 ```
-voice_bot/
+conversational-voice-bot/
+├── .github/
+│   ├── workflows/ci.yml     # Automated CI pipeline (lint, type-check, test, coverage)
+│   └── dependabot.yml       # Automated dependency updates
 ├── api/                     # FastAPI app, routes, webhooks, WebSockets
 │   ├── routes/              # Health, Calls, Webhooks, Prompts, WebSockets
 │   └── main.py              # Server entrypoint and lifecycle hooks
@@ -118,8 +207,8 @@ voice_bot/
 │   ├── session_manager.py   # Active call session tracking
 │   └── stream_manager.py    # Jitter buffer and audio frame packetization
 ├── llm/                     # Gemini 2.5 Flash Live & Mock LLM providers
-├── stt/                     # Google Streaming STT & Mock STT providers
-├── tts/                     # Google Cloud Streaming TTS & Mock TTS providers
+├── stt/                     # Deepgram Streaming, Google Cloud & Mock STT providers
+├── tts/                     # Deepgram Aura, Google Cloud & Mock TTS providers
 ├── conversation/            # State Machine & Conversation Manager
 ├── prompt_engine/           # Dynamic YAML system prompt builder
 ├── prompts/                 # Sample business workflows (Sales, Healthcare, Support, Banking)
@@ -132,70 +221,14 @@ voice_bot/
 ├── database/                # SQLAlchemy 2.0 Async ORM models & repositories
 ├── monitoring/              # Prometheus metrics & OpenTelemetry tracer
 ├── utils/                   # Audio codecs (PCM/Mulaw), framing, cancellation tokens
-├── tests/                   # Unit & integration test suite (100% pass)
+├── tests/                   # 75+ automated unit & integration test specs (>84% coverage)
+├── .env.example             # Documented environment configuration template
+├── pyproject.toml           # Tooling configurations (Ruff, Black, Mypy, Pytest, Coverage)
+├── requirements.txt         # Production dependencies
+├── requirements-dev.txt     # Development and testing dependencies
+├── requirements-lock.txt    # Pinned dependency lockfile
 ├── Dockerfile               # Production multi-stage Docker build
-├── docker-compose.yml       # Container deployment configuration
-├── config.yaml              # Default application settings
-└── requirements.txt         # Dependencies
-```
-
----
-
-## 🛠 Configuration Guide
-
-Environment variables can be defined in a `.env` file or environment variables:
-
-```env
-APP_NAME=VoiceAI Platform
-APP_ENV=production
-DEBUG=False
-PORT=8000
-HOST=0.0.0.0
-TARGET_MAX_LATENCY_MS=800.0
-
-# Providers: "gemini_live", "google", or "mock"
-LLM_PROVIDER=mock
-STT_PROVIDER=mock
-TTS_PROVIDER=mock
-
-# Google Cloud / Vertex AI Credentials
-GEMINI_API_KEY=your_gemini_api_key
-VERTEX_PROJECT_ID=your_gcp_project
-
-# Database
-DATABASE_URL=sqlite+aiosqlite:///./voice_ai.db
-
-# Telephony (Twilio)
-TWILIO_ACCOUNT_SID=your_twilio_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_PHONE_NUMBER=+18005550199
-```
-
----
-
-## 🧪 Testing Guide
-
-Run the full automated unit and integration test suite:
-
-```bash
-pytest -v
-```
-
-Output:
-```text
-tests/test_api.py::test_health_endpoint PASSED                           [  7%]
-tests/test_api.py::test_outbound_call_endpoint PASSED                    [ 15%]
-tests/test_api.py::test_twilio_inbound_webhook PASSED                    [ 23%]
-tests/test_api.py::test_prompt_retrieval PASSED                          [ 30%]
-tests/test_interruptions.py::test_barge_in_interruption_flush PASSED     [ 38%]
-tests/test_prompt_engine.py::test_prompt_loader PASSED                   [ 46%]
-tests/test_prompt_engine.py::test_prompt_builder PASSED                  [ 53%]
-tests/test_state_machine.py::test_state_machine_valid_transitions PASSED [ 61%]
-tests/test_state_machine.py::test_state_machine_invalid_transition PASSED [ 69%]
-tests/test_tool_executor.py::test_tool_registry_execution PASSED         [ 76%]
-tests/test_vad.py::test_vad_silence_detection PASSED                     [ 84%]
-tests/test_vad.py::test_vad_speech_start_and_end PASSED                  [ 92%]
-tests/test_voice_gateway.py::test_audio_pipeline_execution PASSED        [100%]
+└── docker-compose.yml       # Container deployment configuration
 ```
 
 ---
@@ -241,3 +274,4 @@ curl -X POST "http://localhost:8000/api/v1/calls/outbound" \
 
 ## 📄 License
 Production Voice AI Platform codebase — Built for low-latency conversational AI applications.
+
